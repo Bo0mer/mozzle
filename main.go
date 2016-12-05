@@ -61,30 +61,30 @@ func main() {
 		summary := app.EnvironmentSummary
 		Emit("overall cpu percent", summary.TotalCPU)
 
-		Emit("overall memory total_bytes", int64(summary.TotalMemoryConfigured))
-		Emit("overall memory used_bytes", int64(summary.TotalMemoryUsage))
+		Emit("overall memory total_bytes", int(summary.TotalMemoryConfigured))
+		Emit("overall memory used_bytes", int(summary.TotalMemoryUsage))
 		ratio := float64(summary.TotalMemoryUsage) / float64(summary.TotalMemoryConfigured)
 		Emit("overall memory used_ratio", ratio)
 
-		Emit("overall disk total_bytes", int64(summary.TotalDiskConfigured))
-		Emit("overall disk used_bytes", int64(summary.TotalDiskUsage))
+		Emit("overall disk total_bytes", int(summary.TotalDiskConfigured))
+		Emit("overall disk used_bytes", int(summary.TotalDiskUsage))
 		ratio = float64(summary.TotalDiskUsage) / float64(summary.TotalDiskConfigured)
 		Emit("overall disk used_ratio", ratio)
 
-		Emit("overall instance configured_count", int64(app.InstanceCount.Configured))
-		Emit("overall instance running_count", int64(app.InstanceCount.Running))
+		Emit("overall instance configured_count", int(app.InstanceCount.Configured))
+		Emit("overall instance running_count", int(app.InstanceCount.Running))
 		ratio = float64(app.InstanceCount.Running) / float64(app.InstanceCount.Configured)
 		Emit("overall instance availability_ratio", ratio)
 
 		for _, instance := range app.Instances {
 			instancePrefix := fmt.Sprintf("instance %d ", instance.Index)
-			Emit(instancePrefix+"memory total_bytes", int64(instance.MemoryAvailable))
-			Emit(instancePrefix+"memory used_bytes", int64(instance.MemoryUsage))
+			Emit(instancePrefix+"memory total_bytes", int(instance.MemoryAvailable))
+			Emit(instancePrefix+"memory used_bytes", int(instance.MemoryUsage))
 			ratio = float64(instance.MemoryUsage) / float64(instance.MemoryAvailable)
 			Emit(instancePrefix+"memory used_ratio", ratio)
 
-			Emit(instancePrefix+"disk total_bytes", int64(instance.DiskAvailable))
-			Emit(instancePrefix+"disk used_bytes", int64(instance.DiskUsage))
+			Emit(instancePrefix+"disk total_bytes", int(instance.DiskAvailable))
+			Emit(instancePrefix+"disk used_bytes", int(instance.DiskUsage))
 			ratio = float64(instance.DiskUsage) / float64(instance.DiskAvailable)
 			Emit(instancePrefix+"disk used_ratio", ratio)
 
