@@ -9,6 +9,7 @@ import (
 
 var (
 	apiAddr     string
+	insecure    bool
 	username    string
 	password    string
 	appGuid     string
@@ -19,6 +20,7 @@ var (
 
 func init() {
 	flag.StringVar(&apiAddr, "api", "", "Address of the Cloud Foundry API")
+	flag.BoolVar(&insecure, "insecure", false, "Please, please, don't!")
 	flag.StringVar(&username, "username", "admin", "Cloud Foundry user")
 	flag.StringVar(&password, "password", "admin", "Cloud Foundry password")
 	flag.StringVar(&appGuid, "app-guid", "", "Cloud Foundry application GUID")
@@ -29,9 +31,10 @@ func init() {
 func main() {
 	flag.Parse()
 	cf, err := NewCloudFoundry(Target{
-		API:      apiAddr,
-		Username: username,
-		Password: password,
+		API:                       apiAddr,
+		Username:                  username,
+		Password:                  password,
+		InsecureSkipSSLValidation: insecure,
 	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "mozzle: error creating cf client: %v\n", err)
