@@ -14,6 +14,7 @@ var (
 	password    string
 	appGuid     string
 	riemannAddr string
+	environment string
 
 	interval int
 )
@@ -25,6 +26,7 @@ func init() {
 	flag.StringVar(&password, "password", "admin", "Cloud Foundry password")
 	flag.StringVar(&appGuid, "app-guid", "", "Cloud Foundry application GUID")
 	flag.StringVar(&riemannAddr, "riemann", "127.0.0.1:5555", "Address of the Riemann endpoint")
+	flag.StringVar(&environment, "environment", "", "Environment, e.g. test, staging, prod")
 	flag.IntVar(&interval, "interval", 5, "Interval (in seconds) between reports")
 }
 
@@ -48,7 +50,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	Initialize(riemannAddr, app.Name, "", 30.0, 256)
+	Initialize(riemannAddr, app.Name, environment, 30.0, 256)
 
 	d := time.Duration(interval) * time.Second
 	for range time.Tick(d) {

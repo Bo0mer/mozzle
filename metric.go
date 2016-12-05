@@ -8,7 +8,7 @@ import (
 )
 
 var client *goryman.GorymanClient
-var prefix string
+var eventPrefix string
 var eventHost string
 var eventTtl float32
 
@@ -16,9 +16,11 @@ var events chan *goryman.Event
 
 func Initialize(riemannAddr, host, prefix string, ttl float32, queueSize int) {
 	client = goryman.NewGorymanClient(riemannAddr)
+	eventPrefix = prefix
 	eventHost = host
 	eventTtl = ttl
 	events = make(chan *goryman.Event, queueSize)
+
 
 	go emitLoop()
 }
@@ -39,8 +41,8 @@ func emit(e *goryman.Event) {
 	e.Time = time.Now().Unix()
 	e.Host = eventHost
 
-	if prefix != "" {
-		e.Service = prefix + e.Service
+	if eventPrefix != "" {
+		e.Service = eventPrefix + " " + e.Service
 	}
 
 	select {
