@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/bigdatadev/goryman"
@@ -42,44 +42,53 @@ type ContainerMetrics struct {
 }
 
 func (c ContainerMetrics) Emit() {
-	pfx := fmt.Sprintf("instance %d ", c.GetInstanceIndex())
+	attributes := make(map[string]string)
+	attributes["instance"] = strconv.Itoa(int(c.GetInstanceIndex()))
+	attributes["application_id"] = c.GetApplicationId()
 
 	emit(&goryman.Event{
-		Service: pfx + "memory used_bytes",
-		Metric:  int(c.GetMemoryBytes()),
-		State:   "ok",
+		Service:    "memory used_bytes",
+		Metric:     int(c.GetMemoryBytes()),
+		State:      "ok",
+		Attributes: attributes,
 	})
 	emit(&goryman.Event{
-		Service: pfx + "memory total_bytes",
-		Metric:  int(c.GetMemoryBytesQuota()),
-		State:   "ok",
+		Service:    "memory total_bytes",
+		Metric:     int(c.GetMemoryBytesQuota()),
+		State:      "ok",
+		Attributes: attributes,
 	})
 	emit(&goryman.Event{
-		Service: pfx + "memory used_ratio",
-		Metric:  ratio(c.GetMemoryBytes(), c.GetMemoryBytesQuota()),
-		State:   "ok",
-	})
-
-	emit(&goryman.Event{
-		Service: pfx + "disk used_bytes",
-		Metric:  int(c.GetDiskBytes()),
-		State:   "ok",
-	})
-	emit(&goryman.Event{
-		Service: pfx + "disk total_bytes",
-		Metric:  int(c.GetDiskBytesQuota()),
-		State:   "ok",
-	})
-	emit(&goryman.Event{
-		Service: pfx + "disk used_ratio",
-		Metric:  ratio(c.GetDiskBytes(), c.GetDiskBytesQuota()),
-		State:   "ok",
+		Service:    "memory used_ratio",
+		Metric:     ratio(c.GetMemoryBytes(), c.GetMemoryBytesQuota()),
+		State:      "ok",
+		Attributes: attributes,
 	})
 
 	emit(&goryman.Event{
-		Service: pfx + "cpu_percent",
-		Metric:  c.GetCpuPercentage(),
-		State:   "ok",
+		Service:    "disk used_bytes",
+		Metric:     int(c.GetDiskBytes()),
+		State:      "ok",
+		Attributes: attributes,
+	})
+	emit(&goryman.Event{
+		Service:    "disk total_bytes",
+		Metric:     int(c.GetDiskBytesQuota()),
+		State:      "ok",
+		Attributes: attributes,
+	})
+	emit(&goryman.Event{
+		Service:    "disk used_ratio",
+		Metric:     ratio(c.GetDiskBytes(), c.GetDiskBytesQuota()),
+		State:      "ok",
+		Attributes: attributes,
+	})
+
+	emit(&goryman.Event{
+		Service:    "cpu_percent",
+		Metric:     c.GetCpuPercentage(),
+		State:      "ok",
+		Attributes: attributes,
 	})
 }
 
@@ -88,23 +97,21 @@ type HTTPMetrics struct {
 }
 
 func (r HTTPMetrics) Emit() {
-	durationMillis := (r.GetStopTimestamp() - r.GetStartTimestamp()) / 1000000
-	emit(&goryman.Event{
-		Service: "http response time_ms",
-		Metric:  int(durationMillis),
-		State:   "ok",
-	})
-
 	if r.GetPeerType() == cfevent.PeerType_Client {
+		attributes := make(map[string]string)
+		attributes["instance"] = strconv.Itoa(int(r.GetInstanceIndex()))
+		attributes["application_id"] = r.GetApplicationId().String()
+		attributes["method"] = r.GetMethod().String()
+		attributes["request_id"] = r.GetRequestId().String()
+		attributes["content_length"] = strconv.Itoa(int(r.GetContentLength()))
+		attributes["status_code"] = strconv.Itoa(int(r.GetStatusCode()))
+
+		durationMillis := (r.GetStopTimestamp() - r.GetStartTimestamp()) / 1000000
 		emit(&goryman.Event{
-			Service: "http response code",
-			Metric:  int(r.GetStatusCode()),
-			State:   "ok",
-		})
-		emit(&goryman.Event{
-			Service: "http response bytes_count",
-			Metric:  int(r.GetContentLength()),
-			State:   "ok",
+			Service:    "http response time_ms",
+			Metric:     int(durationMillis),
+			State:      "ok",
+			Attributes: attributes,
 		})
 	}
 }
@@ -123,6 +130,7 @@ func emit(e *goryman.Event) {
 	select {
 	case events <- e:
 	default:
+		log.Printf("queue full, dropping events\n")
 	}
 }
 
