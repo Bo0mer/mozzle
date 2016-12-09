@@ -88,17 +88,17 @@ type HTTPMetrics struct {
 }
 
 func (r HTTPMetrics) Emit() {
-	var durationMillis = (r.GetStopTimestamp() - r.GetStartTimestamp()) / 1000000
+	durationMillis := (r.GetStopTimestamp() - r.GetStartTimestamp()) / 1000000
 	emit(&goryman.Event{
 		Service: "http response time_ms",
-		Metric:  durationMillis,
+		Metric:  int(durationMillis),
 		State:   "ok",
 	})
 
 	if r.GetPeerType() == cfevent.PeerType_Client {
 		emit(&goryman.Event{
 			Service: "http response code",
-			Metric:  r.GetStatusCode(),
+			Metric:  int(r.GetStatusCode()),
 			State:   "ok",
 		})
 		emit(&goryman.Event{
