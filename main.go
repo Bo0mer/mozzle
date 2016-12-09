@@ -1,10 +1,13 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
 	"fmt"
+	"net/http"
 	"os"
-	"time"
+
+	"github.com/cloudfoundry/noaa/consumer"
 )
 
 var (
@@ -16,18 +19,24 @@ var (
 	riemannAddr string
 	environment string
 
-	interval int
+	interval  int
+	eventsTtl float64
+	queueSize int
 )
 
 func init() {
-	flag.StringVar(&apiAddr, "api", "", "Address of the Cloud Foundry API")
+	flag.StringVar(&apiAddr, "api", "http://api.bosh-lite.com", "Address of the Cloud Foundry API")
 	flag.BoolVar(&insecure, "insecure", false, "Please, please, don't!")
 	flag.StringVar(&username, "username", "admin", "Cloud Foundry user")
 	flag.StringVar(&password, "password", "admin", "Cloud Foundry password")
 	flag.StringVar(&appGuid, "app-guid", "", "Cloud Foundry application GUID")
+
 	flag.StringVar(&riemannAddr, "riemann", "127.0.0.1:5555", "Address of the Riemann endpoint")
 	flag.StringVar(&environment, "environment", "", "Environment, e.g. test, staging, prod")
+
 	flag.IntVar(&interval, "interval", 5, "Interval (in seconds) between reports")
+	flag.Float64Var(&eventsTtl, "events-ttl", 30.0, "TTL for emitted events (in seconds)")
+	flag.IntVar(&queueSize, "events-queue-size", 256, "Queue size for outgoing events")
 }
 
 func main() {
@@ -43,54 +52,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	apper := NewCFApper(cf, appGuid)
-	app, err := apper.App()
+	app, err := cf.Summary(appGuid)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "mozzle: error initializing app info: %v", err)
+		fmt.Fprintf(os.Stderr, "mozzle: error retrieving app info: %v\n", err)
 		os.Exit(1)
 	}
 
-	Initialize(riemannAddr, app.Name, environment, 30.0, 256)
-
-	d := time.Duration(interval) * time.Second
-	for range time.Tick(d) {
-		app, err := apper.App()
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "mozzle: error fetching app info: %v\n", err)
-			continue
-		}
-
-		summary := app.EnvironmentSummary
-		Emit("overall cpu percent", summary.TotalCPU)
-
-		Emit("overall memory total_bytes", int(summary.TotalMemoryConfigured))
-		Emit("overall memory used_bytes", int(summary.TotalMemoryUsage))
-		ratio := float64(summary.TotalMemoryUsage) / float64(summary.TotalMemoryConfigured)
-		Emit("overall memory used_ratio", ratio)
-
-		Emit("overall disk total_bytes", int(summary.TotalDiskConfigured))
-		Emit("overall disk used_bytes", int(summary.TotalDiskUsage))
-		ratio = float64(summary.TotalDiskUsage) / float64(summary.TotalDiskConfigured)
-		Emit("overall disk used_ratio", ratio)
-
-		Emit("overall instance configured_count", int(app.InstanceCount.Configured))
-		Emit("overall instance running_count", int(app.InstanceCount.Running))
-		ratio = float64(app.InstanceCount.Running) / float64(app.InstanceCount.Configured)
-		Emit("overall instance availability_ratio", ratio)
-
-		for _, instance := range app.Instances {
-			instancePrefix := fmt.Sprintf("instance %d ", instance.Index)
-			Emit(instancePrefix+"memory total_bytes", int(instance.MemoryAvailable))
-			Emit(instancePrefix+"memory used_bytes", int(instance.MemoryUsage))
-			ratio = float64(instance.MemoryUsage) / float64(instance.MemoryAvailable)
-			Emit(instancePrefix+"memory used_ratio", ratio)
-
-			Emit(instancePrefix+"disk total_bytes", int(instance.DiskAvailable))
-			Emit(instancePrefix+"disk used_bytes", int(instance.DiskUsage))
-			ratio = float64(instance.DiskUsage) / float64(instance.DiskAvailable)
-			Emit(instancePrefix+"disk used_ratio", ratio)
-
-			Emit(instancePrefix+"cpu_percent", instance.CPUUsage)
-		}
+	authToken, err := cf.client.GetToken()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "mozzle: error retrieving token: %v\n", err)
+		os.Exit(1)
 	}
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: insecure,
+	}
+	c := consumer.New(cf.DopplerEndpoint(), tlsConfig, http.ProxyFromEnvironment)
+	c.RefreshTokenFrom(cf)
+	msgChan, errorChan := c.Stream(appGuid, authToken)
+
+	go func() {
+		for err := range errorChan {
+			fmt.Fprintf(os.Stderr, "mozzle: error received: %v\n", err.Error())
+		}
+	}()
+
+	Initialize(riemannAddr, app.Name, environment, float32(interval), queueSize)
+	Emit(msgChan)
 }

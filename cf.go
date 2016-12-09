@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"time"
 
 	cfclient "github.com/cloudfoundry-community/go-cfclient"
 )
@@ -21,11 +23,24 @@ type Target struct {
 }
 
 func NewCloudFoundry(target Target) (*CloudFoundry, error) {
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
 	client, err := cfclient.NewClient(&cfclient.Config{
 		ApiAddress:        target.API,
 		Username:          target.Username,
 		Password:          target.Password,
-		HttpClient:        http.DefaultClient,
+		HttpClient:        httpClient,
 		SkipSslValidation: target.InsecureSkipSSLValidation,
 	})
 
@@ -37,6 +52,14 @@ func NewCloudFoundry(target Target) (*CloudFoundry, error) {
 		target: target,
 		client: client,
 	}, nil
+}
+
+func (c *CloudFoundry) RefreshAuthToken() (string, error) {
+	return c.client.GetToken()
+}
+
+func (c *CloudFoundry) DopplerEndpoint() string {
+	return c.client.Endpoint.DopplerEndpoint
 }
 
 // Summary returns a summary for application.
