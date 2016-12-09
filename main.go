@@ -25,7 +25,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&apiAddr, "api", "http://api.bosh-lite.com", "Address of the Cloud Foundry API")
+	flag.StringVar(&apiAddr, "api", "https://api.bosh-lite.com", "Address of the Cloud Foundry API")
 	flag.BoolVar(&insecure, "insecure", false, "Please, please, don't!")
 	flag.StringVar(&username, "username", "admin", "Cloud Foundry user")
 	flag.StringVar(&password, "password", "admin", "Cloud Foundry password")
