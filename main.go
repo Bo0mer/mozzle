@@ -52,7 +52,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	firehose := consumer.New(cf.Endpoint.DopplerEndpoint, &tls.Config{InsecureSkipVerify: true}, nil)
+	firehose := consumer.New(cf.Endpoint.DopplerEndpoint, &tls.Config{InsecureSkipVerify: insecure}, nil)
 	m := NewAppMonitor(cf, firehose, log.New(os.Stdout, "mozzle: ", 0))
 
 	if err := m.Monitor(org, space); err != nil {
