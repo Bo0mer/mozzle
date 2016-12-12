@@ -1,5 +1,5 @@
 # mozzle
-Pull metrics for Cloud Foundry applications and forward them to statsd
+Pull metrics for Cloud Foundry applications and forward them to Riemann.
 
 ## User's guide
 ```
