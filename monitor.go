@@ -1,11 +1,13 @@
-package main
+package mozzle
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -14,13 +16,23 @@ import (
 	cfevent "github.com/cloudfoundry/sonde-go/events"
 )
 
+// Target specifies a monitoring target.
+type Target struct {
+	API      string
+	Username string
+	Password string
+	Insecure bool
+	Org      string
+	Space    string
+}
+
 type appNotFoundError string
 
 func (e appNotFoundError) Error() string {
 	return fmt.Sprintf("application %s not found", string(e))
 }
 
-type AppMonitor struct {
+type appMonitor struct {
 	cloudFoundryClient *cfclient.Client
 	firehose           *consumer.Consumer
 	errLog             *log.Logger
@@ -28,55 +40,71 @@ type AppMonitor struct {
 	refreshInterval time.Duration
 
 	mu        sync.Mutex // guards
-	monitored map[AppMetadata]struct{}
+	monitored map[appMetadata]struct{}
 }
 
-func NewAppMonitor(cf *cfclient.Client, firehose *consumer.Consumer, errLog *log.Logger) *AppMonitor {
-	return &AppMonitor{
+// Monitor monitors a target for events and sends them to Riemann.
+func Monitor(ctx context.Context, t Target) error {
+	cf, err := cfclient.NewClient(&cfclient.Config{
+		ApiAddress:        t.API,
+		Username:          t.Username,
+		Password:          t.Password,
+		SkipSslValidation: t.Insecure,
+	})
+	if err != nil {
+		return err
+	}
+
+	tlsConfig := &tls.Config{InsecureSkipVerify: t.Insecure}
+	firehose := consumer.New(cf.Endpoint.DopplerEndpoint, tlsConfig, nil)
+	mon := appMonitor{
 		cloudFoundryClient: cf,
 		firehose:           firehose,
-		errLog:             errLog,
-
-		refreshInterval: time.Second * 5,
-
-		monitored: make(map[AppMetadata]struct{}),
+		errLog:             log.New(os.Stderr, "mozzle: ", 0),
+		refreshInterval:    time.Second * 5,
+		monitored:          make(map[appMetadata]struct{}),
 	}
+
+	return mon.Monitor(ctx, t.Org, t.Space)
 }
 
-func (m *AppMonitor) Monitor(org, space string) error {
+func (m *appMonitor) Monitor(ctx context.Context, org, space string) error {
 	targetSpace, err := m.space(org, space)
 	if err != nil {
 		return err
 	}
 
-	for range time.Tick(m.refreshInterval) {
-		apps, err := m.spaceApps(targetSpace.Guid)
-		if err != nil {
-			m.errLog.Printf("error fetching apps: %v\n", err)
-			continue
-		}
-		m.mu.Lock()
-		for _, app := range apps {
-			appMetadata := AppMetadata{
-				Org:   org,
-				Space: space,
-				Guid:  app.Guid,
-				Name:  app.Name,
-			}
-			if _, ok := m.monitored[appMetadata]; ok {
+	for {
+		select {
+		case <-time.Tick(m.refreshInterval):
+			apps, err := m.spaceApps(targetSpace.Guid)
+			if err != nil {
+				m.errLog.Printf("error fetching apps: %v\n", err)
 				continue
 			}
-			m.monitored[appMetadata] = struct{}{}
-			go m.monitorApp(appMetadata)
+			m.mu.Lock()
+			for _, app := range apps {
+				appMetadata := appMetadata{
+					Org:   org,
+					Space: space,
+					Guid:  app.Guid,
+					Name:  app.Name,
+				}
+				if _, ok := m.monitored[appMetadata]; ok {
+					continue
+				}
+				m.monitored[appMetadata] = struct{}{}
+				go m.monitorApp(ctx, appMetadata)
+			}
+			m.mu.Unlock()
+		case <-ctx.Done():
+			return ctx.Err()
 		}
-		m.mu.Unlock()
 	}
-
-	return nil
 }
 
-func (m *AppMonitor) monitorApp(app AppMetadata) {
-	ctx, cancel := context.WithCancel(context.Background())
+func (m *appMonitor) monitorApp(ctx context.Context, app appMetadata) {
+	firehoseCtx, cancel := context.WithCancel(ctx)
 	defer func() {
 		m.mu.Lock()
 		delete(m.monitored, app)
@@ -84,21 +112,26 @@ func (m *AppMonitor) monitorApp(app AppMetadata) {
 		cancel()
 	}()
 
-	go m.monitorFirehose(ctx, app)
-	for range time.Tick(time.Second * 5) {
-		summary, err := m.appSummary(app.Guid)
-		if err != nil {
-			if _, ok := err.(appNotFoundError); ok {
-				return
+	go m.monitorFirehose(firehoseCtx, app)
+	for {
+		select {
+		case <-time.Tick(m.refreshInterval):
+			summary, err := m.appSummary(app.Guid)
+			if err != nil {
+				if _, ok := err.(appNotFoundError); ok {
+					return
+				}
+				m.errLog.Printf("error fetching app summary: %v\n", err)
+				continue
 			}
-			m.errLog.Printf("error fetching app summary: %v\n", err)
-			continue
+			applicationMetrics{summary, app}.Emit()
+		case <-ctx.Done():
+			return
 		}
-		ApplicationMetrics{summary, app}.Emit()
 	}
 }
 
-func (m *AppMonitor) monitorFirehose(ctx context.Context, app AppMetadata) {
+func (m *appMonitor) monitorFirehose(ctx context.Context, app appMetadata) {
 	authToken, err := m.cloudFoundryClient.GetToken()
 	if err != nil {
 		return
@@ -110,9 +143,9 @@ func (m *AppMonitor) monitorFirehose(ctx context.Context, app AppMetadata) {
 		case event := <-msgChan:
 			switch event.GetEventType() {
 			case cfevent.Envelope_ContainerMetric:
-				ContainerMetrics{event.GetContainerMetric(), app}.Emit()
+				containerMetrics{event.GetContainerMetric(), app}.Emit()
 			case cfevent.Envelope_HttpStartStop:
-				HTTPMetrics{event.GetHttpStartStop(), app}.Emit()
+				httpMetrics{event.GetHttpStartStop(), app}.Emit()
 			}
 		case <-ctx.Done():
 			m.errLog.Printf("stopping firehose monitor for app %s due to: %v",
@@ -124,26 +157,26 @@ func (m *AppMonitor) monitorFirehose(ctx context.Context, app AppMetadata) {
 	}
 }
 
-func (m *AppMonitor) appSummary(appGuid string) (AppSummary, error) {
+func (m *appMonitor) appSummary(appGuid string) (appSummary, error) {
 	path := fmt.Sprintf("/v2/apps/%s/summary", appGuid)
 	req := m.cloudFoundryClient.NewRequest("GET", path)
 	resp, err := m.cloudFoundryClient.DoRequest(req)
 	if err != nil {
-		return AppSummary{}, err
+		return appSummary{}, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotFound {
-		return AppSummary{}, appNotFoundError(appGuid)
+		return appSummary{}, appNotFoundError(appGuid)
 	}
 
-	var s AppSummary
+	var s appSummary
 	if err := json.NewDecoder(resp.Body).Decode(&s); err != nil {
-		return AppSummary{}, err
+		return appSummary{}, err
 	}
 	return s, nil
 }
 
-func (m *AppMonitor) spaceApps(guid string) ([]cfclient.App, error) {
+func (m *appMonitor) spaceApps(guid string) ([]cfclient.App, error) {
 	spaceApps := make([]cfclient.App, 0)
 	apps, err := m.cloudFoundryClient.ListApps()
 	if err != nil {
@@ -157,7 +190,7 @@ func (m *AppMonitor) spaceApps(guid string) ([]cfclient.App, error) {
 	return spaceApps, nil
 }
 
-func (m *AppMonitor) space(orgName, spaceName string) (cfclient.Space, error) {
+func (m *appMonitor) space(orgName, spaceName string) (cfclient.Space, error) {
 	var targetOrg cfclient.Org
 	orgs, err := m.cloudFoundryClient.ListOrgs()
 	if err != nil {

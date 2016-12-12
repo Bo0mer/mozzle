@@ -1,13 +1,14 @@
 package main
 
 import (
-	"crypto/tls"
+	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"os/signal"
 
-	cfclient "github.com/cloudfoundry-community/go-cfclient"
-	"github.com/cloudfoundry/noaa/consumer"
+	"github.com/Bo0mer/mozzle"
 )
 
 var (
@@ -40,22 +41,26 @@ func init() {
 
 func main() {
 	flag.Parse()
-	Initialize(riemannAddr, float32(eventsTtl), queueSize)
-	cf, err := cfclient.NewClient(&cfclient.Config{
-		ApiAddress:        apiAddr,
-		Username:          username,
-		Password:          password,
-		SkipSslValidation: insecure,
-	})
-
-	if err != nil {
-		log.Fatal(err)
+	mozzle.Initialize(riemannAddr, float32(eventsTtl), queueSize)
+	t := mozzle.Target{
+		API:      apiAddr,
+		Username: username,
+		Password: password,
+		Insecure: insecure,
+		Org:      org,
+		Space:    space,
 	}
 
-	firehose := consumer.New(cf.Endpoint.DopplerEndpoint, &tls.Config{InsecureSkipVerify: insecure}, nil)
-	m := NewAppMonitor(cf, firehose, log.New(os.Stdout, "mozzle: ", 0))
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt)
+		<-sig
+		fmt.Println("exiting...")
+		cancel()
+	}()
 
-	if err := m.Monitor(org, space); err != nil {
+	if err := mozzle.Monitor(ctx, t); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -1,13 +1,13 @@
-package main
+package mozzle
 
-type AppMetadata struct {
+type appMetadata struct {
 	Org   string
 	Space string
 	Guid  string
 	Name  string
 }
 
-type AppSummary struct {
+type appSummary struct {
 	Id               string `json:"guid"`
 	Name             string `json:"name"`
 	Space            string `json:"space_guid"`

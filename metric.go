@@ -1,4 +1,4 @@
-package main
+package mozzle
 
 import (
 	"log"
@@ -14,6 +14,10 @@ var eventTtl float32
 
 var events chan *goryman.Event
 
+// Initialize prepares for emitting to Riemann.
+// It should be called only once, before any calls to the Monitor functionality.
+// The queueSize argument specifies how many events will be kept in-memory
+// if there is problem with emission.
 func Initialize(riemannAddr string, ttl float32, queueSize int) {
 	client = goryman.NewGorymanClient(riemannAddr)
 	eventTtl = ttl
@@ -22,12 +26,12 @@ func Initialize(riemannAddr string, ttl float32, queueSize int) {
 	go emitLoop()
 }
 
-type ContainerMetrics struct {
+type containerMetrics struct {
 	*cfevent.ContainerMetric
-	App AppMetadata
+	App appMetadata
 }
 
-func (c ContainerMetrics) Emit() {
+func (c containerMetrics) Emit() {
 	attributes := make(map[string]string)
 	attributes["org"] = c.App.Org
 	attributes["space"] = c.App.Space
@@ -88,12 +92,12 @@ func (c ContainerMetrics) Emit() {
 	})
 }
 
-type HTTPMetrics struct {
+type httpMetrics struct {
 	*cfevent.HttpStartStop
-	App AppMetadata
+	App appMetadata
 }
 
-func (r HTTPMetrics) Emit() {
+func (r httpMetrics) Emit() {
 	if r.GetPeerType() == cfevent.PeerType_Client {
 		attributes := make(map[string]string)
 		attributes["org"] = r.App.Org
@@ -118,12 +122,12 @@ func (r HTTPMetrics) Emit() {
 	}
 }
 
-type ApplicationMetrics struct {
-	AppSummary
-	App AppMetadata
+type applicationMetrics struct {
+	appSummary
+	App appMetadata
 }
 
-func (m ApplicationMetrics) Emit() {
+func (m applicationMetrics) Emit() {
 	attributes := make(map[string]string)
 	attributes["org"] = m.App.Org
 	attributes["space"] = m.App.Space
@@ -141,6 +145,12 @@ func (m ApplicationMetrics) Emit() {
 		Service:    "instance running_count",
 		Metric:     m.RunningInstances,
 		State:      state,
+		Attributes: attributes,
+	})
+	emit(&goryman.Event{
+		Service:    "instance configured_count",
+		Metric:     m.Instances,
+		State:      "ok",
 		Attributes: attributes,
 	})
 }
