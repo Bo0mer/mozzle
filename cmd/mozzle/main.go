@@ -1,3 +1,5 @@
+// mozzle is a command-line utility which subscribes collects Cloud Foundry
+// application events and emits them to Riemann.
 package main
 
 import (
