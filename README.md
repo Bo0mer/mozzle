@@ -1,4 +1,6 @@
 # mozzle
+[![GoDoc](https://godoc.org/github.com/Bo0mer/mozzle?status.svg)](https://godoc.org/github.com/Bo0mer/mozzle)
+
 Pull metrics for Cloud Foundry applications and forward them to Riemann.
 
 ## User's guide
