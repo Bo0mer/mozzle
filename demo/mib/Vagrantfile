@@ -1,0 +1,38 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure(2) do |config|
+
+  config.vm.box = "ubuntu/trusty64"
+
+  config.vm.box_check_update = false
+
+  # Riemann
+  config.vm.network "forwarded_port", guest: 5555, host: 5555, protocol: "tcp"
+  config.vm.network "forwarded_port", guest: 5555, host: 5555, protocol: "udp"
+  # InfluxDB
+  config.vm.network "forwarded_port", guest: 8086, host: 8086
+  # Grafana
+  config.vm.network "forwarded_port", guest: 3000, host: 3000
+
+  # config.vm.network "private_network", ip: "192.168.33.10"
+  # config.vm.network "public_network"
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = "1024"
+  end
+
+  # Provision configuration
+  config.vm.provision "file", source: "etc/influxdb/influxdb.conf", destination: "~/influxdb.conf"
+  config.vm.provision "file", source: "etc/riemann/riemann.config", destination: "~/riemann.config"
+
+  # Install and configure software
+  config.vm.provision "shell", keep_color: true, path: "scripts/os-setup.sh"
+  config.vm.provision "shell", keep_color: true, path: "scripts/influxdb.sh"
+  config.vm.provision "shell", keep_color: true, path: "scripts/grafana.sh"
+  config.vm.provision "shell", keep_color: true, path: "scripts/riemann.sh"
+
+  # Provision Grafana dashboards
+  config.vm.provision "file", source: "dashboards/summary.json", destination: "~/summary.json"
+  config.vm.provision "shell", keep_color: true, path: "scripts/configure_dashboards.sh"
+
+end
