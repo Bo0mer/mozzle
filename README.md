@@ -34,6 +34,6 @@ mozzle -api api.bosh-lite.com -org NASA -space rocket
 ```
 
 ### Demo usage
-This repo brings a [vagrant]() automation that will setup a VM ready for
+This repo brings a [vagrant](https://www.vagrantup.com/) automation that will setup a VM ready for
 showing your application metrics. For more info on settin it up, refer to its
 [README](https://github.com/Bo0mer/mozzle/tree/master/demo/mib/) file.
