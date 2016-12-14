@@ -16,8 +16,8 @@ and configured - thus ready for use.
 
 ### Running it
 
-You need is `VirtualBox` and `vagrant` installed and a *proxyless internet
-connection*. After that, it's just
+You need is `VirtualBox` and `vagrant` installed and a **proxyless internet
+connection**. After that, it's just
 a matter of
 ```
 cd mib
