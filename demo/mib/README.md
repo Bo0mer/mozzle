@@ -2,7 +2,7 @@ mib
 ===
 ## mozzle in a box 
 
-![mozzle metrics in a Grafana dashboard](https://github.com/Bo0mer/mozzle/tree/master/demo/mib/misc/mozzle_demo_dashboard.png)
+![mozzle metrics in a Grafana dashboard](https://raw.githubusercontent.com/Bo0mer/mozzle/master/demo/mib/misc/mozzle_demo_dashboard.png)
 
 This vagrant setup provides infrastructure for monitoring Cloud Foundry applications
 via [mozzle](https://github.com/Bo0mer/mozzle).
