@@ -191,19 +191,12 @@ func (m *appMonitor) spaceApps(guid string) ([]cfclient.App, error) {
 }
 
 func (m *appMonitor) space(orgName, spaceName string) (cfclient.Space, error) {
-	var targetOrg cfclient.Org
-	orgs, err := m.cloudFoundryClient.ListOrgs()
+	org, err := m.org(orgName)
 	if err != nil {
 		return cfclient.Space{}, err
 	}
-	for _, org := range orgs {
-		if org.Name == orgName {
-			targetOrg = org
-			break
-		}
-	}
 
-	spaces, err := m.cloudFoundryClient.OrgSpaces(targetOrg.Guid)
+	spaces, err := m.cloudFoundryClient.OrgSpaces(org.Guid)
 	if err != nil {
 		return cfclient.Space{}, err
 	}
@@ -214,4 +207,34 @@ func (m *appMonitor) space(orgName, spaceName string) (cfclient.Space, error) {
 		}
 	}
 	return cfclient.Space{}, fmt.Errorf("space %s not found", spaceName)
+}
+
+func (m *appMonitor) org(name string) (cfclient.Org, error) {
+	cf := m.cloudFoundryClient
+
+	path := fmt.Sprintf("/v2/organizations?q=name:%s", name)
+	resp, err := cf.DoRequest(cf.NewRequest("GET", path))
+	if err != nil {
+		return cfclient.Org{}, fmt.Errorf("error requesting organizations: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var orgResp cfclient.OrgResponse
+	d := json.NewDecoder(resp.Body)
+	if err := d.Decode(&orgResp); err != nil {
+		return cfclient.Org{}, fmt.Errorf("error decoding response: %v", err)
+	}
+	println(orgResp.Count)
+	if orgResp.Count == 0 {
+		return cfclient.Org{}, fmt.Errorf("org %q not found", name)
+	}
+	if orgResp.Count > 1 {
+		return cfclient.Org{}, fmt.Errorf("name %q does not refer to a single org", name)
+	}
+
+	return cfclient.Org{
+		Guid: orgResp.Resources[0].Meta.Guid,
+		Name: orgResp.Resources[0].Entity.Name,
+	}, nil
+
 }
