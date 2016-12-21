@@ -137,7 +137,7 @@ func (m *appMonitor) monitorFirehose(ctx context.Context, app appMetadata) {
 		return
 	}
 
-	msgChan, errorChan := m.firehose.StreamWithoutReconnect(app.Guid, authToken)
+	msgChan, errorChan := m.firehose.Stream(app.Guid, authToken)
 	for {
 		select {
 		case event := <-msgChan:
@@ -151,7 +151,11 @@ func (m *appMonitor) monitorFirehose(ctx context.Context, app appMetadata) {
 			m.errLog.Printf("stopping firehose monitor for app %s due to: %v",
 				app.Guid, ctx.Err())
 			return
-		case err := <-errorChan:
+		case err, ok := <-errorChan:
+			if !ok {
+				m.errLog.Printf("firehose error chan closed, exiting\n")
+				return
+			}
 			m.errLog.Printf("error streaming from firehose: %v\n", err)
 		}
 	}
@@ -224,7 +228,7 @@ func (m *appMonitor) org(name string) (cfclient.Org, error) {
 	if err := d.Decode(&orgResp); err != nil {
 		return cfclient.Org{}, fmt.Errorf("error decoding response: %v", err)
 	}
-	println(orgResp.Count)
+
 	if orgResp.Count == 0 {
 		return cfclient.Org{}, fmt.Errorf("org %q not found", name)
 	}
