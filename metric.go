@@ -142,12 +142,14 @@ func (m applicationMetrics) Emit() {
 		}
 	}
 	emit(&goryman.Event{
+		Host:       m.App.Name,
 		Service:    "instance running_count",
 		Metric:     m.RunningInstances,
 		State:      state,
 		Attributes: attributes,
 	})
 	emit(&goryman.Event{
+		Host:       m.App.Name,
 		Service:    "instance configured_count",
 		Metric:     m.Instances,
 		State:      "ok",
