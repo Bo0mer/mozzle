@@ -74,9 +74,11 @@ func (m *appMonitor) Monitor(ctx context.Context, org, space string) error {
 		return err
 	}
 
+	ticker := time.NewTicker(m.refreshInterval)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-time.Tick(m.refreshInterval):
+		case <-ticker.C:
 			apps, err := m.spaceApps(targetSpace.Guid)
 			if err != nil {
 				m.errLog.Printf("error fetching apps: %v\n", err)
