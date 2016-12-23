@@ -28,7 +28,7 @@ func Initialize(riemannAddr string, ttl float32, queueSize int) {
 
 type containerMetrics struct {
 	*cfevent.ContainerMetric
-	App appMetadata
+	App application
 }
 
 func (c containerMetrics) Emit() {
@@ -90,7 +90,7 @@ func (c containerMetrics) Emit() {
 
 type httpMetrics struct {
 	*cfevent.HttpStartStop
-	App appMetadata
+	App application
 }
 
 func (r httpMetrics) Emit() {
@@ -124,7 +124,7 @@ func (r httpMetrics) Emit() {
 
 type applicationMetrics struct {
 	appSummary
-	App appMetadata
+	App application
 }
 
 func (m applicationMetrics) Emit() {
@@ -155,7 +155,7 @@ func (m applicationMetrics) Emit() {
 
 type applicationEvent struct {
 	appEvent
-	App appMetadata
+	App application
 }
 
 func (e applicationEvent) Emit() {
@@ -167,6 +167,7 @@ func (e applicationEvent) Emit() {
 	attributes["actor_type"] = e.ActorType
 
 	emit(&goryman.Event{
+		Time:       e.Timestamp.Unix(),
 		Host:       e.App.Name,
 		Service:    "app event",
 		Metric:     1,
@@ -209,7 +210,7 @@ func ratio(part, whole uint64) float64 {
 	return float64(part) / float64(whole)
 }
 
-func attributes(app appMetadata) map[string]string {
+func attributes(app application) map[string]string {
 	return map[string]string{
 		"org":            app.Org,
 		"space":          app.Space,

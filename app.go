@@ -2,7 +2,7 @@ package mozzle
 
 import "time"
 
-type appMetadata struct {
+type application struct {
 	Org   string
 	Space string
 	Guid  string
