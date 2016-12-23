@@ -1,5 +1,7 @@
 package mozzle
 
+import "time"
+
 type appMetadata struct {
 	Org   string
 	Space string
@@ -17,4 +19,13 @@ type appSummary struct {
 	RunningInstances int    `json:"running_instances"`
 	DiskQuota        int32  `json:"disk_quota"`
 	State            string `json:"state"`
+}
+
+type appEvent struct {
+	Type      string    `json:"type"`
+	ActorName string    `json:"actor_name"`
+	ActorType string    `json:"actor_type"`
+	ActeeName string    `json:"actee_name"`
+	ActeeType string    `json:"actee_type"`
+	Timestamp time.Time `json:"timestamp"`
 }

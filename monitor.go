@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"sync"
 	"time"
@@ -57,6 +58,7 @@ func Monitor(ctx context.Context, t Target) error {
 
 	tlsConfig := &tls.Config{InsecureSkipVerify: t.Insecure}
 	firehose := consumer.New(cf.Endpoint.DopplerEndpoint, tlsConfig, nil)
+	firehose.RefreshTokenFrom(tokenRefresher{cf})
 	mon := appMonitor{
 		cloudFoundryClient: cf,
 		firehose:           firehose,
@@ -106,7 +108,7 @@ func (m *appMonitor) Monitor(ctx context.Context, org, space string) error {
 }
 
 func (m *appMonitor) monitorApp(ctx context.Context, app appMetadata) {
-	firehoseCtx, cancel := context.WithCancel(ctx)
+	monitorCtx, cancel := context.WithCancel(ctx)
 	defer func() {
 		m.mu.Lock()
 		delete(m.monitored, app)
@@ -114,22 +116,40 @@ func (m *appMonitor) monitorApp(ctx context.Context, app appMetadata) {
 		cancel()
 	}()
 
-	go m.monitorFirehose(firehoseCtx, app)
+	go m.monitorFirehose(monitorCtx, app)
+
+	ticker := time.NewTicker(m.refreshInterval)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-time.Tick(m.refreshInterval):
-			summary, err := m.appSummary(app.Guid)
-			if err != nil {
-				if _, ok := err.(appNotFoundError); ok {
-					return
-				}
-				m.errLog.Printf("error fetching app summary: %v\n", err)
-				continue
-			}
-			applicationMetrics{summary, app}.Emit()
+		case now := <-ticker.C:
+			m.emitAppSummary(app)
+			m.emitAppEvents(app, now.Add(-1*m.refreshInterval))
 		case <-ctx.Done():
 			return
 		}
+	}
+}
+
+func (m *appMonitor) emitAppSummary(app appMetadata) {
+	summary, err := m.appSummary(app.Guid)
+	if err != nil {
+		if _, ok := err.(appNotFoundError); ok {
+			return
+		}
+		m.errLog.Printf("error fetching app summary: %v\n", err)
+	}
+	applicationMetrics{summary, app}.Emit()
+}
+
+func (m *appMonitor) emitAppEvents(app appMetadata, since time.Time) {
+	events, err := m.appEventsSince(app, since)
+	if err != nil {
+		m.errLog.Printf("error fetching app events: %v\n", err)
+		return
+	}
+	for _, event := range events {
+		applicationEvent{event, app}.Emit()
 	}
 }
 
@@ -180,6 +200,22 @@ func (m *appMonitor) appSummary(appGuid string) (appSummary, error) {
 		return appSummary{}, err
 	}
 	return s, nil
+}
+
+func (m *appMonitor) appEventsSince(app appMetadata, t time.Time) ([]appEvent, error) {
+	var events []appEvent
+	cf := m.cloudFoundryClient
+	since := url.QueryEscape(t.String())
+	path := fmt.Sprintf("/v2/events?q=actee:%s&q=timestamp:%s", app.Guid, since)
+	req := cf.NewRequest("GET", path)
+	resp, err := cf.DoRequest(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	err = json.NewDecoder(resp.Body).Decode(&events)
+	return events, err
 }
 
 func (m *appMonitor) spaceApps(guid string) ([]cfclient.App, error) {
@@ -243,4 +279,12 @@ func (m *appMonitor) org(name string) (cfclient.Org, error) {
 		Name: orgResp.Resources[0].Entity.Name,
 	}, nil
 
+}
+
+type tokenRefresher struct {
+	*cfclient.Client
+}
+
+func (tr tokenRefresher) RefreshAuthToken() (string, error) {
+	return tr.GetToken()
 }

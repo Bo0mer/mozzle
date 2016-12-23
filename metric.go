@@ -32,12 +32,8 @@ type containerMetrics struct {
 }
 
 func (c containerMetrics) Emit() {
-	attributes := make(map[string]string)
-	attributes["org"] = c.App.Org
-	attributes["space"] = c.App.Space
-	attributes["application"] = c.App.Name
+	attributes := attributes(c.App)
 	attributes["instance"] = strconv.Itoa(int(c.GetInstanceIndex()))
-	attributes["application_id"] = c.GetApplicationId()
 
 	emit(&goryman.Event{
 		Host:       c.App.Name,
@@ -98,24 +94,28 @@ type httpMetrics struct {
 }
 
 func (r httpMetrics) Emit() {
-	if r.GetPeerType() == cfevent.PeerType_Client {
-		attributes := make(map[string]string)
-		attributes["org"] = r.App.Org
-		attributes["space"] = r.App.Space
-		attributes["application"] = r.App.Name
-		attributes["application_id"] = r.GetApplicationId().String()
-		attributes["instance"] = strconv.Itoa(int(r.GetInstanceIndex()))
+	attributes := attributes(r.App)
+	attributes["instance"] = strconv.Itoa(int(r.GetInstanceIndex()))
 
-		attributes["method"] = r.GetMethod().String()
-		attributes["request_id"] = r.GetRequestId().String()
-		attributes["content_length"] = strconv.Itoa(int(r.GetContentLength()))
-		attributes["status_code"] = strconv.Itoa(int(r.GetStatusCode()))
+	attributes["method"] = r.GetMethod().String()
+	attributes["request_id"] = r.GetRequestId().String()
+	attributes["status_code"] = strconv.Itoa(int(r.GetStatusCode()))
 
+	switch r.GetPeerType() {
+	case cfevent.PeerType_Client:
 		durationMillis := (r.GetStopTimestamp() - r.GetStartTimestamp()) / 1000000
 		emit(&goryman.Event{
 			Host:       r.App.Name,
 			Service:    "http response time_ms",
 			Metric:     int(durationMillis),
+			State:      "ok",
+			Attributes: attributes,
+		})
+	case cfevent.PeerType_Server:
+		emit(&goryman.Event{
+			Host:       r.App.Name,
+			Service:    "http response content_length_bytes",
+			Metric:     int(r.GetContentLength()),
 			State:      "ok",
 			Attributes: attributes,
 		})
@@ -128,11 +128,7 @@ type applicationMetrics struct {
 }
 
 func (m applicationMetrics) Emit() {
-	attributes := make(map[string]string)
-	attributes["org"] = m.App.Org
-	attributes["space"] = m.App.Space
-	attributes["application"] = m.App.Name
-	attributes["application_id"] = m.Id
+	attributes := attributes(m.App)
 
 	state := "ok"
 	if m.RunningInstances < m.Instances {
@@ -152,6 +148,28 @@ func (m applicationMetrics) Emit() {
 		Host:       m.App.Name,
 		Service:    "instance configured_count",
 		Metric:     m.Instances,
+		State:      "ok",
+		Attributes: attributes,
+	})
+}
+
+type applicationEvent struct {
+	appEvent
+	App appMetadata
+}
+
+func (e applicationEvent) Emit() {
+	attributes := attributes(e.App)
+	attributes["event"] = e.Type
+	attributes["actee"] = e.ActeeName
+	attributes["actee_type"] = e.ActeeType
+	attributes["actor"] = e.ActorName
+	attributes["actor_type"] = e.ActorType
+
+	emit(&goryman.Event{
+		Host:       e.App.Name,
+		Service:    "app event",
+		Metric:     1,
 		State:      "ok",
 		Attributes: attributes,
 	})
@@ -189,4 +207,13 @@ func emitLoop() {
 
 func ratio(part, whole uint64) float64 {
 	return float64(part) / float64(whole)
+}
+
+func attributes(app appMetadata) map[string]string {
+	return map[string]string{
+		"org":            app.Org,
+		"space":          app.Space,
+		"application":    app.Name,
+		"application_id": app.Guid,
+	}
 }
