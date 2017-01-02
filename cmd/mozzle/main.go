@@ -43,7 +43,11 @@ func init() {
 
 func main() {
 	flag.Parse()
-	mozzle.Initialize(riemannAddr, float32(eventsTtl), queueSize)
+
+	initCtx, cancelInit := context.WithCancel(context.Background())
+	mozzle.Initialize(initCtx, riemannAddr, float32(eventsTtl), queueSize)
+	defer cancelInit()
+
 	t := mozzle.Target{
 		API:      apiAddr,
 		Username: username,
@@ -63,6 +67,6 @@ func main() {
 	}()
 
 	if err := mozzle.Monitor(ctx, t); err != nil {
-		log.Fatal(err)
+		log.Printf("mozzle: error occured during Monitor: %v\n", err)
 	}
 }

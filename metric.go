@@ -1,6 +1,7 @@
 package mozzle
 
 import (
+	"context"
 	"log"
 	"strconv"
 	"time"
@@ -15,15 +16,17 @@ var eventTtl float32
 var events chan *goryman.Event
 
 // Initialize prepares for emitting to Riemann.
-// It should be called only once, before any calls to the Monitor functionality.
+// It should be called only once, before the first call of Monitor.
 // The queueSize argument specifies how many events will be kept in-memory
 // if there is problem with emission.
-func Initialize(riemannAddr string, ttl float32, queueSize int) {
+// The initialization is not valid beyond the lifetime of the context, thus
+// the context should end its life only after the last call to Monitor has returned.
+func Initialize(ctx context.Context, riemannAddr string, ttl float32, queueSize int) {
 	client = goryman.NewGorymanClient(riemannAddr)
 	eventTtl = ttl
 	events = make(chan *goryman.Event, queueSize)
 
-	go emitLoop()
+	go emitLoop(ctx)
 }
 
 type containerMetrics struct {
@@ -189,19 +192,25 @@ func emit(e *goryman.Event) {
 	}
 }
 
-func emitLoop() {
+func emitLoop(ctx context.Context) {
 	connected := false
-	for e := range events {
-		if !connected {
-			if err := client.Connect(); err != nil {
-				log.Printf("metric: error connecting to riemann: %v\n", err)
-				continue
-			}
-			connected = true
-		}
+	for {
+		select {
+		case e := <-events:
 
-		if err := client.SendEvent(e); err != nil {
-			log.Printf("metric: error sending event: %v\n", err)
+			if !connected {
+				if err := client.Connect(); err != nil {
+					log.Printf("metric: error connecting to riemann: %v\n", err)
+					continue
+				}
+				connected = true
+			}
+
+			if err := client.SendEvent(e); err != nil {
+				log.Printf("metric: error sending event: %v\n", err)
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
