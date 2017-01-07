@@ -1,218 +1,32 @@
 package mozzle
 
-import (
-	"context"
-	"log"
-	"strconv"
-	"time"
+// Metric is a metric regarding an application.
+type Metric struct {
+	Application   string
+	ApplicationID string
+	Organization  string
+	Space         string
 
-	"github.com/bigdatadev/goryman"
-	cfevent "github.com/cloudfoundry/sonde-go/events"
-)
-
-var client *goryman.GorymanClient
-var eventTtl float32
-
-var events chan *goryman.Event
-
-// Initialize prepares for emitting to Riemann.
-// It should be called only once, before the first call of Monitor.
-// The queueSize argument specifies how many events will be kept in-memory
-// if there is problem with emission.
-// The initialization is not valid beyond the lifetime of the context, thus
-// the context should end its life only after the last call to Monitor has returned.
-func Initialize(ctx context.Context, riemannAddr string, ttl float32, queueSize int) {
-	client = goryman.NewGorymanClient(riemannAddr)
-	eventTtl = ttl
-	events = make(chan *goryman.Event, queueSize)
-
-	go emitLoop(ctx)
+	Time       int64
+	Service    string
+	Metric     interface{}
+	State      string
+	Attributes map[string]string
 }
 
-type containerMetrics struct {
-	*cfevent.ContainerMetric
-	App application
+// Emitter should emit application metrics.
+type Emitter interface {
+	// Emit emits the specified application metric.
+	// It should not block and should be safe for concurrent use.
+	Emit(m Metric)
 }
 
-func (c containerMetrics) Emit() {
-	attributes := attributes(c.App)
-	attributes["instance"] = strconv.Itoa(int(c.GetInstanceIndex()))
-
-	emit(&goryman.Event{
-		Host:       c.App.Name,
-		Service:    "memory used_bytes",
-		Metric:     int(c.GetMemoryBytes()),
-		State:      "ok",
-		Attributes: attributes,
-	})
-	emit(&goryman.Event{
-		Host:       c.App.Name,
-		Service:    "memory total_bytes",
-		Metric:     int(c.GetMemoryBytesQuota()),
-		State:      "ok",
-		Attributes: attributes,
-	})
-	emit(&goryman.Event{
-		Host:       c.App.Name,
-		Service:    "memory used_ratio",
-		Metric:     ratio(c.GetMemoryBytes(), c.GetMemoryBytesQuota()),
-		State:      "ok",
-		Attributes: attributes,
-	})
-
-	emit(&goryman.Event{
-		Host:       c.App.Name,
-		Service:    "disk used_bytes",
-		Metric:     int(c.GetDiskBytes()),
-		State:      "ok",
-		Attributes: attributes,
-	})
-	emit(&goryman.Event{
-		Host:       c.App.Name,
-		Service:    "disk total_bytes",
-		Metric:     int(c.GetDiskBytesQuota()),
-		State:      "ok",
-		Attributes: attributes,
-	})
-	emit(&goryman.Event{
-		Host:       c.App.Name,
-		Service:    "disk used_ratio",
-		Metric:     ratio(c.GetDiskBytes(), c.GetDiskBytesQuota()),
-		State:      "ok",
-		Attributes: attributes,
-	})
-
-	emit(&goryman.Event{
-		Host:       c.App.Name,
-		Service:    "cpu_percent",
-		Metric:     c.GetCpuPercentage(),
-		State:      "ok",
-		Attributes: attributes,
-	})
-}
-
-type httpMetrics struct {
-	*cfevent.HttpStartStop
-	App application
-}
-
-func (r httpMetrics) Emit() {
-	attributes := attributes(r.App)
-	attributes["instance"] = strconv.Itoa(int(r.GetInstanceIndex()))
-
-	attributes["method"] = r.GetMethod().String()
-	attributes["request_id"] = r.GetRequestId().String()
-	attributes["status_code"] = strconv.Itoa(int(r.GetStatusCode()))
-
-	switch r.GetPeerType() {
-	case cfevent.PeerType_Client:
-		durationMillis := (r.GetStopTimestamp() - r.GetStartTimestamp()) / 1000000
-		emit(&goryman.Event{
-			Host:       r.App.Name,
-			Service:    "http response time_ms",
-			Metric:     int(durationMillis),
-			State:      "ok",
-			Attributes: attributes,
-		})
-	case cfevent.PeerType_Server:
-		emit(&goryman.Event{
-			Host:       r.App.Name,
-			Service:    "http response content_length_bytes",
-			Metric:     int(r.GetContentLength()),
-			State:      "ok",
-			Attributes: attributes,
-		})
-	}
-}
-
-type applicationMetrics struct {
-	appSummary
-	App application
-}
-
-func (m applicationMetrics) Emit() {
-	attributes := attributes(m.App)
-
-	state := "ok"
-	if m.RunningInstances < m.Instances {
-		state = "warn"
-		if m.RunningInstances == 0 {
-			state = "critical"
-		}
-	}
-	emit(&goryman.Event{
-		Host:       m.App.Name,
-		Service:    "instance running_count",
-		Metric:     m.RunningInstances,
-		State:      state,
-		Attributes: attributes,
-	})
-	emit(&goryman.Event{
-		Host:       m.App.Name,
-		Service:    "instance configured_count",
-		Metric:     m.Instances,
-		State:      "ok",
-		Attributes: attributes,
-	})
-}
-
-type applicationEvent struct {
-	appEvent
-	App application
-}
-
-func (e applicationEvent) Emit() {
-	attributes := attributes(e.App)
-	attributes["event"] = e.Type
-	attributes["actee"] = e.ActeeName
-	attributes["actee_type"] = e.ActeeType
-	attributes["actor"] = e.ActorName
-	attributes["actor_type"] = e.ActorType
-
-	emit(&goryman.Event{
-		Time:       e.Timestamp.Unix(),
-		Host:       e.App.Name,
-		Service:    "app event",
-		Metric:     1,
-		State:      "ok",
-		Attributes: attributes,
-	})
-}
-
-func emit(e *goryman.Event) {
-	if e.Ttl == 0.0 {
-		e.Ttl = eventTtl
-	}
-	e.Time = time.Now().Unix()
-
-	select {
-	case events <- e:
-	default:
-		log.Printf("queue full, dropping events\n")
-	}
-}
-
-func emitLoop(ctx context.Context) {
-	connected := false
-	for {
-		select {
-		case e := <-events:
-
-			if !connected {
-				if err := client.Connect(); err != nil {
-					log.Printf("metric: error connecting to riemann: %v\n", err)
-					continue
-				}
-				connected = true
-			}
-
-			if err := client.SendEvent(e); err != nil {
-				log.Printf("metric: error sending event: %v\n", err)
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
+func forApp(app application, m Metric) Metric {
+	m.Application = app.Entity.Name
+	m.ApplicationID = app.GUID
+	m.Organization = app.Org
+	m.Space = app.Space
+	return m
 }
 
 func ratio(part, whole uint64) float64 {
@@ -223,7 +37,7 @@ func attributes(app application) map[string]string {
 	return map[string]string{
 		"org":            app.Org,
 		"space":          app.Space,
-		"application":    app.Name,
-		"application_id": app.Guid,
+		"application":    app.Entity.Name,
+		"application_id": app.GUID,
 	}
 }
