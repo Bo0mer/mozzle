@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -84,9 +85,13 @@ func Monitor(ctx context.Context, t Target, e Emitter) (err error) {
 	if err != nil {
 		return err
 	}
+	var httpClient = http.DefaultClient
+	if t.Insecure {
+		httpClient = defaultInsecureClient
+	}
 	cf := &ccv2.Client{
 		API:        u,
-		HTTPClient: http.DefaultClient,
+		HTTPClient: httpClient,
 	}
 
 	infoCtx, cancel := context.WithTimeout(ctx, DefaultRPCTimeout)
@@ -104,13 +109,15 @@ func Monitor(ctx context.Context, t Target, e Emitter) (err error) {
 		},
 	}
 
-	token, err := oauthConfig.PasswordCredentialsToken(context.Background(), t.Username, t.Password)
+	// clientCtx is used to pass a non-default *http.Client to package aouth2.
+	clientCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
+	token, err := oauthConfig.PasswordCredentialsToken(clientCtx, t.Username, t.Password)
 	if err != nil {
 		return err
 	}
 	cf = &ccv2.Client{
 		API:        u,
-		HTTPClient: oauthConfig.Client(context.Background(), token),
+		HTTPClient: oauthConfig.Client(clientCtx, token),
 	}
 
 	tlsConfig := &tls.Config{InsecureSkipVerify: t.Insecure}
@@ -121,7 +128,7 @@ func Monitor(ctx context.Context, t Target, e Emitter) (err error) {
 		}
 	}()
 
-	uaa := oauthConfig.TokenSource(context.Background(), token)
+	uaa := oauthConfig.TokenSource(clientCtx, token)
 	tr := tokenRefresher{uaa}
 	firehose.RefreshTokenFrom(&tr)
 
@@ -358,4 +365,21 @@ func (tr *tokenRefresher) RefreshAuthToken() (string, error) {
 		return "", err
 	}
 	return t.TokenType + " " + t.AccessToken, nil
+}
+
+var defaultInsecureClient = &http.Client{
+	Transport: &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	},
 }
