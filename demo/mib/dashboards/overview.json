@@ -1,6 +1,42 @@
 {
+  "__inputs": [
+    {
+      "name": "DS_INFLUXDB",
+      "label": "InfluxDB",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ],
+  "__requires": [
+    {
+      "type": "panel",
+      "id": "graph",
+      "name": "Graph",
+      "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "singlestat",
+      "name": "Singlestat",
+      "version": ""
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "4.0.2"
+    },
+    {
+      "type": "datasource",
+      "id": "influxdb",
+      "name": "InfluxDB",
+      "version": "1.0.0"
+    }
+  ],
   "id": null,
-  "title": "InfluxDb New",
+  "title": "Overview",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -39,33 +75,110 @@
   "templating": {
     "list": [
       {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_INFLUXDB}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Organization",
+        "multi": false,
+        "name": "org_name",
+        "options": [],
+        "query": "show tag values WITH key = \"org\"",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": null,
+        "tagsQuery": null,
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_INFLUXDB}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Space",
+        "multi": false,
+        "name": "space_name",
+        "options": [],
+        "query": "show tag values WITH key = \"space\"",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": null,
+        "tagsQuery": null,
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {},
+        "datasource": "${DS_INFLUXDB}",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Application",
+        "multi": false,
+        "name": "app_name",
+        "options": [],
+        "query": "show tag values WITH key = \"application\"",
+        "refresh": 1,
+        "regex": "",
+        "sort": 0,
+        "tagValuesQuery": null,
+        "tagsQuery": null,
+        "type": "query",
+        "useTags": false
+      },
+      {
         "auto": true,
         "auto_count": 5,
-        "auto_min": "10s",
+        "auto_min": "5s",
         "current": {
-          "text": "auto",
-          "value": "$__auto_interval"
+          "text": "30s",
+          "value": "30s"
         },
         "datasource": null,
         "hide": 0,
         "includeAll": false,
-        "label": "Interval",
+        "label": "",
         "multi": false,
-        "name": "interval",
+        "name": "summarize",
         "options": [
           {
             "text": "auto",
             "value": "$__auto_interval",
-            "selected": true
+            "selected": false
+          },
+          {
+            "text": "5s",
+            "value": "5s",
+            "selected": false
+          },
+          {
+            "text": "10s",
+            "value": "10s",
+            "selected": false
+          },
+          {
+            "text": "15s",
+            "value": "15s",
+            "selected": false
           },
           {
             "text": "30s",
             "value": "30s",
-            "selected": false
+            "selected": true
           },
           {
             "text": "1m",
             "value": "1m",
+            "selected": false
+          },
+          {
+            "text": "5m",
+            "value": "5m",
             "selected": false
           },
           {
@@ -114,84 +227,29 @@
             "selected": false
           }
         ],
-        "query": "30s,1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "query": "5s,10s,15s,30s,1m,5m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
         "refresh": 2,
         "type": "interval"
-      },
-      {
-        "allValue": null,
-        "current": {
-          "text": "deploy-service",
-          "value": "deploy-service"
-        },
-        "datasource": "InfluxDB",
-        "hide": 0,
-        "includeAll": false,
-        "label": "Organization",
-        "multi": false,
-        "name": "org_name",
-        "options": [],
-        "query": "show tag values WITH key = \"org\"",
-        "refresh": 1,
-        "regex": "",
-        "sort": 0,
-        "tagValuesQuery": null,
-        "tagsQuery": null,
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "allValue": null,
-        "current": {
-          "text": "i305961",
-          "value": "i305961"
-        },
-        "datasource": "InfluxDB",
-        "hide": 0,
-        "includeAll": false,
-        "label": "Space",
-        "multi": false,
-        "name": "space_name",
-        "options": [],
-        "query": "show tag values WITH key = \"space\"",
-        "refresh": 1,
-        "regex": "",
-        "sort": 0,
-        "tagValuesQuery": null,
-        "tagsQuery": null,
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "allValue": null,
-        "current": {
-          "text": "deploy-service-i305961",
-          "value": "deploy-service-i305961"
-        },
-        "datasource": "InfluxDB",
-        "hide": 0,
-        "includeAll": false,
-        "label": "Application",
-        "multi": false,
-        "name": "app_name",
-        "options": [],
-        "query": "show tag values WITH key = \"application\"",
-        "refresh": 1,
-        "regex": "",
-        "sort": 0,
-        "tagValuesQuery": null,
-        "tagsQuery": null,
-        "type": "query",
-        "useTags": false
       }
     ]
   },
   "annotations": {
-    "list": []
+    "list": [
+      {
+        "datasource": "${DS_INFLUXDB}",
+        "enable": true,
+        "iconColor": "rgba(255, 96, 96, 1)",
+        "limit": 100,
+        "name": "Crashes",
+        "query": "SELECT value FROM \"app event\" WHERE \"state\" != 'expired' AND \"application\" =~ /^$app_name$/ AND \"event\" =~ /^app.crash$/ AND $timeFilter",
+        "tagsColumn": "",
+        "type": "alert"
+      }
+    ]
   },
-  "refresh": "5s",
+  "refresh": "30s",
   "schemaVersion": 13,
-  "version": 6,
+  "version": 22,
   "links": [],
   "gnetId": null,
   "rows": [
@@ -201,12 +259,12 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "InfluxDB",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 1,
           "grid": {},
-          "id": 6,
+          "id": 14,
           "legend": {
             "avg": false,
             "current": false,
@@ -234,7 +292,7 @@
               "groupBy": [
                 {
                   "params": [
-                    "$interval"
+                    "$summarize"
                   ],
                   "type": "time"
                 },
@@ -302,15 +360,17 @@
               "colorMode": "custom",
               "fill": true,
               "fillColor": "rgba(216, 200, 27, 0.27)",
+              "line": false,
               "op": "gt",
-              "value": 0.85
+              "value": 0.8
             },
             {
               "colorMode": "custom",
               "fill": true,
               "fillColor": "rgba(234, 112, 112, 0.22)",
+              "line": false,
               "op": "gt",
-              "value": 0.95
+              "value": 0.9
             }
           ],
           "timeFrom": null,
@@ -351,7 +411,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "InfluxDB",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -384,7 +444,7 @@
               "groupBy": [
                 {
                   "params": [
-                    "$interval"
+                    "$summarize"
                   ],
                   "type": "time"
                 },
@@ -452,6 +512,7 @@
               "colorMode": "custom",
               "fill": true,
               "fillColor": "rgba(216, 200, 27, 0.27)",
+              "line": false,
               "op": "gt",
               "value": 0.8
             },
@@ -459,6 +520,7 @@
               "colorMode": "custom",
               "fill": true,
               "fillColor": "rgba(234, 112, 112, 0.22)",
+              "line": false,
               "op": "gt",
               "value": 0.9
             }
@@ -501,7 +563,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "InfluxDB",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -534,7 +596,7 @@
               "groupBy": [
                 {
                   "params": [
-                    "$interval"
+                    "$summarize"
                   ],
                   "type": "time"
                 },
@@ -642,7 +704,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "InfluxDB",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -675,7 +737,7 @@
               "groupBy": [
                 {
                   "params": [
-                    "$interval"
+                    "$summarize"
                   ],
                   "type": "time"
                 },
@@ -700,7 +762,7 @@
               ],
               "hide": false,
               "measurement": "memory used_bytes",
-              "policy": "autogen",
+              "policy": "one_week",
               "query": "SELECT mean(\"value\") FROM \"autogen\".\"memory used_bytes\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"instance\", \"host\" fill(none)",
               "rawQuery": false,
               "refId": "A",
@@ -745,7 +807,7 @@
               "groupBy": [
                 {
                   "params": [
-                    "$interval"
+                    "$summarize"
                   ],
                   "type": "time"
                 },
@@ -763,7 +825,7 @@
                 }
               ],
               "measurement": "memory total_bytes",
-              "policy": "autogen",
+              "policy": "one_week",
               "query": "SELECT mean(\"value\") FROM \"autogen\".\"memory total_bytes\" WHERE \"state\" = 'ok' AND $timeFilter GROUP BY time($interval), \"instance\" fill(null)",
               "rawQuery": false,
               "refId": "B",
@@ -842,7 +904,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "InfluxDB",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -875,7 +937,7 @@
               "groupBy": [
                 {
                   "params": [
-                    "$interval"
+                    "$summarize"
                   ],
                   "type": "time"
                 },
@@ -900,7 +962,7 @@
               ],
               "hide": false,
               "measurement": "disk used_bytes",
-              "policy": "autogen",
+              "policy": "one_week",
               "query": "SELECT mean(\"value\") FROM \"autogen\".\"disk used_bytes\" WHERE \"state\" = 'ok' AND $timeFilter GROUP BY time($interval), \"instance\" fill(none)",
               "rawQuery": false,
               "refId": "A",
@@ -945,7 +1007,7 @@
               "groupBy": [
                 {
                   "params": [
-                    "$interval"
+                    "$summarize"
                   ],
                   "type": "time"
                 },
@@ -963,7 +1025,7 @@
                 }
               ],
               "measurement": "disk total_bytes",
-              "policy": "autogen",
+              "policy": "one_week",
               "refId": "B",
               "resultFormat": "time_series",
               "select": [
@@ -1024,7 +1086,678 @@
               "label": null,
               "logBase": 1,
               "max": null,
+              "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
               "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "showTitle": false,
+      "titleSize": "h6",
+      "height": "250px",
+      "repeat": null,
+      "repeatRowId": null,
+      "repeatIteration": null,
+      "collapse": false
+    },
+    {
+      "title": "New row",
+      "panels": [
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "id": 9,
+          "interval": null,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": false
+          },
+          "targets": [
+            {
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND $timeFilter",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "state",
+                  "operator": "=",
+                  "value": "ok"
+                }
+              ],
+              "target": "*"
+            }
+          ],
+          "thresholds": "",
+          "title": "Total requestes",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "${DS_INFLUXDB}",
+          "decimals": null,
+          "editable": true,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "id": 13,
+          "interval": null,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 3,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": false
+          },
+          "targets": [
+            {
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND \"status_code\" =~ /^2[0-9]+$/ AND $timeFilter",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "state",
+                  "operator": "=",
+                  "value": "ok"
+                },
+                {
+                  "condition": "AND",
+                  "key": "status_code",
+                  "operator": "=",
+                  "value": "500"
+                }
+              ],
+              "target": "*"
+            }
+          ],
+          "thresholds": "",
+          "title": "Successful requests",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "id": 10,
+          "interval": null,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": false
+          },
+          "targets": [
+            {
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND \"status_code\" =~ /^5[0-9]+$/ AND $timeFilter",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "state",
+                  "operator": "=",
+                  "value": "ok"
+                },
+                {
+                  "condition": "AND",
+                  "key": "status_code",
+                  "operator": "=",
+                  "value": "500"
+                }
+              ],
+              "target": "*"
+            }
+          ],
+          "thresholds": "",
+          "title": "Failed requests",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 100,
+            "minValue": 0,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "id": 12,
+          "interval": null,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 1,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": false
+          },
+          "targets": [
+            {
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND \"status_code\" =~ /^4[0-9]+$/ AND $timeFilter",
+              "rawQuery": true,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "count"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "host",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "state",
+                  "operator": "=",
+                  "value": "ok"
+                },
+                {
+                  "condition": "AND",
+                  "key": "status_code",
+                  "operator": "=",
+                  "value": "500"
+                }
+              ],
+              "target": "*"
+            }
+          ],
+          "thresholds": "",
+          "title": "4XX responses",
+          "type": "singlestat",
+          "valueFontSize": "80%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "avg"
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "${DS_INFLUXDB}",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "id": 11,
+          "legend": {
+            "avg": false,
+            "current": true,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "instance running_count",
+              "policy": "default",
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "min"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "org",
+                  "operator": "=~",
+                  "value": "/^$org_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "space",
+                  "operator": "=~",
+                  "value": "/^$space_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "application",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                }
+              ]
+            },
+            {
+              "alias": "",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
+              ],
+              "measurement": "instance configured_count",
+              "policy": "default",
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "org",
+                  "operator": "=~",
+                  "value": "/^$org_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "space",
+                  "operator": "=~",
+                  "value": "/^$space_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "application",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                }
+              ]
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Instance Availability",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": "0",
               "show": true
             },
             {
@@ -1052,7 +1785,7 @@
         {
           "aliasColors": {},
           "bars": false,
-          "datasource": "InfluxDB",
+          "datasource": "${DS_INFLUXDB}",
           "editable": true,
           "error": false,
           "fill": 1,
@@ -1191,432 +1924,6 @@
       "showTitle": false,
       "titleSize": "h6",
       "height": "500px",
-      "repeat": null,
-      "repeatRowId": null,
-      "repeatIteration": null,
-      "collapse": false
-    },
-    {
-      "title": "New row",
-      "panels": [
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "datasource": "InfluxDB",
-          "editable": true,
-          "error": false,
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "id": 9,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "span": 4,
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "targets": [
-            {
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                }
-              ],
-              "measurement": "http response time_ms",
-              "policy": "default",
-              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND $timeFilter",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "count"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "host",
-                  "operator": "=~",
-                  "value": "/^$app_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "state",
-                  "operator": "=",
-                  "value": "ok"
-                }
-              ],
-              "target": "*"
-            }
-          ],
-          "thresholds": "",
-          "title": "Total requestes",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "cacheTimeout": null,
-          "colorBackground": false,
-          "colorValue": false,
-          "colors": [
-            "rgba(245, 54, 54, 0.9)",
-            "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
-          ],
-          "datasource": "InfluxDB",
-          "editable": true,
-          "error": false,
-          "format": "none",
-          "gauge": {
-            "maxValue": 100,
-            "minValue": 0,
-            "show": false,
-            "thresholdLabels": false,
-            "thresholdMarkers": true
-          },
-          "id": 10,
-          "interval": null,
-          "links": [],
-          "mappingType": 1,
-          "mappingTypes": [
-            {
-              "name": "value to text",
-              "value": 1
-            },
-            {
-              "name": "range to text",
-              "value": 2
-            }
-          ],
-          "maxDataPoints": 100,
-          "nullPointMode": "connected",
-          "nullText": null,
-          "postfix": "",
-          "postfixFontSize": "50%",
-          "prefix": "",
-          "prefixFontSize": "50%",
-          "rangeMaps": [
-            {
-              "from": "null",
-              "text": "N/A",
-              "to": "null"
-            }
-          ],
-          "span": 4,
-          "sparkline": {
-            "fillColor": "rgba(31, 118, 189, 0.18)",
-            "full": false,
-            "lineColor": "rgb(31, 120, 193)",
-            "show": false
-          },
-          "targets": [
-            {
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                }
-              ],
-              "hide": false,
-              "measurement": "http response time_ms",
-              "policy": "default",
-              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND \"status_code\" = '500' AND $timeFilter",
-              "rawQuery": true,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "count"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "host",
-                  "operator": "=~",
-                  "value": "/^$app_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "state",
-                  "operator": "=",
-                  "value": "ok"
-                },
-                {
-                  "condition": "AND",
-                  "key": "status_code",
-                  "operator": "=",
-                  "value": "500"
-                }
-              ],
-              "target": "*"
-            }
-          ],
-          "thresholds": "",
-          "title": "Total failed requests",
-          "type": "singlestat",
-          "valueFontSize": "80%",
-          "valueMaps": [
-            {
-              "op": "=",
-              "text": "N/A",
-              "value": "null"
-            }
-          ],
-          "valueName": "avg"
-        },
-        {
-          "id": 11,
-          "title": "Instance Availability",
-          "error": false,
-          "span": 4,
-          "editable": true,
-          "type": "graph",
-          "targets": [
-            {
-              "policy": "default",
-              "dsType": "influxdb",
-              "resultFormat": "time_series",
-              "tags": [
-                {
-                  "key": "org",
-                  "operator": "=~",
-                  "value": "/^$org_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "space",
-                  "operator": "=~",
-                  "value": "/^$space_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "application",
-                  "operator": "=~",
-                  "value": "/^$app_name$/"
-                }
-              ],
-              "groupBy": [
-                {
-                  "type": "time",
-                  "params": [
-                    "$interval"
-                  ]
-                },
-                {
-                  "type": "fill",
-                  "params": [
-                    "null"
-                  ]
-                }
-              ],
-              "select": [
-                [
-                  {
-                    "type": "field",
-                    "params": [
-                      "value"
-                    ]
-                  },
-                  {
-                    "type": "mean",
-                    "params": []
-                  }
-                ]
-              ],
-              "refId": "A",
-              "measurement": "instance running_count",
-              "alias": ""
-            },
-            {
-              "policy": "default",
-              "dsType": "influxdb",
-              "resultFormat": "time_series",
-              "tags": [
-                {
-                  "key": "org",
-                  "operator": "=~",
-                  "value": "/^$org_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "space",
-                  "operator": "=~",
-                  "value": "/^$space_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "application",
-                  "operator": "=~",
-                  "value": "/^$app_name$/"
-                }
-              ],
-              "groupBy": [
-                {
-                  "type": "time",
-                  "params": [
-                    "$interval"
-                  ]
-                },
-                {
-                  "type": "fill",
-                  "params": [
-                    "null"
-                  ]
-                }
-              ],
-              "select": [
-                [
-                  {
-                    "type": "field",
-                    "params": [
-                      "value"
-                    ]
-                  },
-                  {
-                    "type": "mean",
-                    "params": []
-                  }
-                ]
-              ],
-              "refId": "B",
-              "measurement": "instance configured_count",
-              "alias": ""
-            }
-          ],
-          "datasource": "InfluxDB",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": "0",
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true,
-            "mode": "time",
-            "name": null,
-            "values": []
-          },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 1,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": true,
-            "min": false,
-            "max": false,
-            "current": true,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "individual",
-            "shared": true,
-            "sort": 0,
-            "msResolution": false
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          "thresholds": [],
-          "links": []
-        }
-      ],
-      "showTitle": false,
-      "titleSize": "h6",
-      "height": "250px",
       "repeat": null,
       "repeatRowId": null,
       "repeatIteration": null,
