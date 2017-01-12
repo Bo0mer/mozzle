@@ -2,7 +2,7 @@
 
 set -ex
 
-for dashboard in /home/vagrant/*.json; do
+for dashboard in /home/vagrant/dashboards/*.json; do
     dashboard_json=$(cat $dashboard)
     curl -X POST \
         -H "Content-Type: application/json" \

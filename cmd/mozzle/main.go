@@ -6,7 +6,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 
@@ -23,7 +22,7 @@ var (
 
 	riemannAddr string
 
-	eventsTtl float64
+	eventsTTL float64
 	queueSize int
 )
 
@@ -37,13 +36,20 @@ func init() {
 
 	flag.StringVar(&riemannAddr, "riemann", "127.0.0.1:5555", "Address of the Riemann endpoint")
 
-	flag.Float64Var(&eventsTtl, "events-ttl", 30.0, "TTL for emitted events (in seconds)")
+	flag.Float64Var(&eventsTTL, "events-ttl", 30.0, "TTL for emitted events (in seconds)")
 	flag.IntVar(&queueSize, "events-queue-size", 256, "Queue size for outgoing events")
 }
 
 func main() {
 	flag.Parse()
-	mozzle.Initialize(riemannAddr, float32(eventsTtl), queueSize)
+	riemann := &mozzle.RiemannEmitter{}
+	riemann.Initialize(riemannAddr, float32(eventsTTL), queueSize)
+	defer func() {
+		if err := riemann.Close(); err != nil {
+			fmt.Printf("mozzle: error closing riemann emitter: %v\n", err)
+		}
+	}()
+
 	t := mozzle.Target{
 		API:      apiAddr,
 		Username: username,
@@ -62,7 +68,7 @@ func main() {
 		cancel()
 	}()
 
-	if err := mozzle.Monitor(ctx, t); err != nil {
-		log.Fatal(err)
+	if err := mozzle.Monitor(ctx, t, riemann); err != nil {
+		fmt.Printf("mozzle: error occured during Monitor: %v\n", err)
 	}
 }

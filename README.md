@@ -3,6 +3,15 @@
 
 Pull metrics for Cloud Foundry applications and forward them to Riemann.
 
+This repo provides two functionalities - a `mozzle` Go package and a mozzle
+command-line tool.
+
+Package mozzle provides an API for monitoring infrastructure metrics of
+Cloud Foundry applications and emitting them to a 3rd party monitoring system.
+
+The `mozzle` command-line tool emits metrics for Cloud Foundry applications
+to a specified Riemann instance. The rest of this document describes its usage.
+
 ## User's guide
 ```
 Usage of mozzle:
@@ -30,7 +39,7 @@ Example:
 The following command will emit metrics for all applications under the `NASA`
 organization, within the `rocket` space.
 ```
-mozzle -api api.bosh-lite.com -org NASA -space rocket
+mozzle -api https://api.bosh-lite.com -org NASA -space rocket
 ```
 
 ### Demo usage

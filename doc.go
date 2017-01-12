@@ -1,7 +1,7 @@
 // Package mozzle implements Cloud Foundry applicaiton monitor that emits
-// metric events into Riemann.
+// metric events.
 //
-// Events for the following metrics are emitted to Riemann.
+// Events for the following metrics are emitted.
 //
 // Regarding memory usage of each instance.
 //			memory used_bytes
@@ -15,9 +15,12 @@
 //			cpu_percent
 // Regarding each HTTP event.
 //			http response time_ms
+//			http response content_length_bytes
 // Regarding availability.
 //			instance running_count
 //			instance configured_count
+// Regarding application events.
+//			app event
 //
 // Each of the events has attributes specifying the application's
 // org, space, name, and the insntace index (when appropriate).
