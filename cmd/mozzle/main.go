@@ -22,8 +22,16 @@ var (
 
 	riemannAddr string
 
-	eventsTTL float64
-	queueSize int
+	eventsTTL     float64
+	queueSize     int
+	reportVersion bool
+)
+
+// populated using -ldflags.
+var (
+	version    string
+	build      string
+	buildstamp string
 )
 
 func init() {
@@ -38,10 +46,16 @@ func init() {
 
 	flag.Float64Var(&eventsTTL, "events-ttl", 30.0, "TTL for emitted events (in seconds)")
 	flag.IntVar(&queueSize, "events-queue-size", 256, "Queue size for outgoing events")
+	flag.BoolVar(&reportVersion, "v", false, "Report mozzle version")
+	flag.BoolVar(&reportVersion, "version", false, "Report mozzle version")
 }
 
 func main() {
 	flag.Parse()
+	if reportVersion {
+		printVersion()
+		os.Exit(0)
+	}
 	riemann := &mozzle.RiemannEmitter{}
 	riemann.Initialize(riemannAddr, float32(eventsTTL), queueSize)
 	defer func() {
@@ -71,4 +85,8 @@ func main() {
 	if err := mozzle.Monitor(ctx, t, riemann); err != nil {
 		fmt.Printf("mozzle: error occured during Monitor: %v\n", err)
 	}
+}
+
+func printVersion() {
+	fmt.Printf("mozzle version %s build %s at %s\n", version, build, buildstamp)
 }
