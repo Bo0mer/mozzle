@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,14 +21,15 @@ import (
 )
 
 var (
-	apiAddr      string
-	insecure     bool
-	username     string
-	password     string
-	accessToken  string
-	refreshToken string
-	org          string
-	space        string
+	apiAddr        string
+	insecure       bool
+	username       string
+	password       string
+	accessToken    string
+	refreshToken   string
+	org            string
+	space          string
+	useCfCliTarget bool
 
 	riemannAddr string
 
@@ -52,6 +54,7 @@ func init() {
 	flag.StringVar(&refreshToken, "refresh-token", "", "Cloud Foundry OAuth2 refresh token; to be used with the token flag")
 	flag.StringVar(&org, "org", "NASA", "Cloud Foundry organization")
 	flag.StringVar(&space, "space", "rocket", "Cloud Foundry space")
+	flag.BoolVar(&useCfCliTarget, "use-cf-cli-target", false, "Use CF CLI's current configured target")
 
 	flag.StringVar(&riemannAddr, "riemann", "127.0.0.1:5555", "Address of the Riemann endpoint")
 
@@ -74,6 +77,20 @@ func main() {
 			fmt.Printf("mozzle: error closing riemann emitter: %v\n", err)
 		}
 	}()
+
+	if useCfCliTarget {
+		cliConfig, err := cfcliConfig()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "mozzle: error reading CF CLI config: %v\n", err)
+			os.Exit(1)
+		}
+		apiAddr = cliConfig.Target
+		accessToken = cliConfig.AccessToken
+		refreshToken = cliConfig.RefreshToken
+		insecure = cliConfig.SSLDisabled
+		org = cliConfig.Organization.Name
+		space = cliConfig.Space.Name
+	}
 
 	var token *oauth2.Token
 	if accessToken != "" {
@@ -110,6 +127,42 @@ func main() {
 
 func printVersion() {
 	fmt.Printf("mozzle version %s build %s at %s\n", version, build, buildstamp)
+}
+
+type cliConfig struct {
+	Target       string `json:"Target"`
+	SSLDisabled  bool   `json:"SSLDisabled"`
+	AccessToken  string `json:"AccessToken"`
+	RefreshToken string `json:"RefreshToken"`
+	Organization struct {
+		Name string `json:"Name"`
+	} `json:"OrganizationFields"`
+	Space struct {
+		Name string `json:"Name"`
+	} `json:"SpaceFields"`
+}
+
+// cfcliConfig reads the CF CLI configuration file from its default location.
+// The default location is CF_HOME/.cf/config.json.
+// If the CF_HOME env variable is not set, it defaults to HOME env variable.
+func cfcliConfig() (*cliConfig, error) {
+	var path string
+	if path = os.Getenv("CF_HOME"); path == "" {
+		path = os.Getenv("HOME")
+	}
+	path = filepath.Join(path, ".cf/config.json")
+	fd, err := os.Open(path)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error open %q", path)
+	}
+	defer fd.Close()
+
+	var config = new(cliConfig)
+	err = json.NewDecoder(fd).Decode(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "error decoding config file content")
+	}
+	return config, nil
 }
 
 func parseToken(accessToken, refreshToken string) (*oauth2.Token, error) {
