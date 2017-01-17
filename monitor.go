@@ -45,6 +45,9 @@ type Target struct {
 	API      string
 	Username string
 	Password string
+	// Token should be a valid OAuth2 bearer token, including a refresh token.
+	// If token is provided the username and password fields should be left emtpy.
+	Token    *oauth2.Token
 	Insecure bool
 	Org      string
 	Space    string
@@ -111,9 +114,12 @@ func Monitor(ctx context.Context, t Target, e Emitter) (err error) {
 
 	// clientCtx is used to pass a non-default *http.Client to package aouth2.
 	clientCtx := context.WithValue(context.Background(), oauth2.HTTPClient, httpClient)
-	token, err := oauthConfig.PasswordCredentialsToken(clientCtx, t.Username, t.Password)
-	if err != nil {
-		return err
+	var token = t.Token
+	if token == nil {
+		token, err = oauthConfig.PasswordCredentialsToken(clientCtx, t.Username, t.Password)
+		if err != nil {
+			return err
+		}
 	}
 	cf = &ccv2.Client{
 		API:        u,
