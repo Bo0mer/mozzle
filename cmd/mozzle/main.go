@@ -70,13 +70,6 @@ func main() {
 		printVersion()
 		os.Exit(0)
 	}
-	riemann := &mozzle.RiemannEmitter{}
-	riemann.Initialize(riemannAddr, float32(eventsTTL), queueSize)
-	defer func() {
-		if err := riemann.Close(); err != nil {
-			fmt.Printf("mozzle: error closing riemann emitter: %v\n", err)
-		}
-	}()
 
 	if useCfCliTarget {
 		cliConfig, err := cfcliConfig()
@@ -118,6 +111,14 @@ func main() {
 		<-sig
 		fmt.Println("exiting...")
 		cancel()
+	}()
+
+	riemann := &mozzle.RiemannEmitter{}
+	riemann.Initialize(riemannAddr, float32(eventsTTL), queueSize)
+	defer func() {
+		if err := riemann.Close(); err != nil {
+			fmt.Printf("mozzle: error closing riemann emitter: %v\n", err)
+		}
 	}()
 
 	if err := mozzle.Monitor(ctx, t, riemann); err != nil {
