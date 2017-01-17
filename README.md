@@ -13,8 +13,34 @@ The `mozzle` command-line tool emits metrics for Cloud Foundry applications
 to a specified Riemann instance. The rest of this document describes its usage.
 
 ## User's guide
+If you want to monitor all applications under your current Cloud Foundry target,
+as set with the CF CLI, you can do the following.
+```
+mozzle -use-cf-cli-target
+```
+
+If you want to explicitly specify the monitored target, you can do that too.
+```
+# This example assumes that you have exported the necessary env variables
+mozzle -api https://api.bosh-lite.com -access-token $CF_ACCESS_TOKEN -refresh-token $CF_REFRESH_TOKEN -org NASA -space rocket
+```
+
+If you do not want to deal with access and refresh tokens, you can provide plain
+username and password.
+```
+mozzle -api https://api.bosh-lite.com -username admin -password admin -org NASA -space rocket
+```
+
+And if your Cloud Foundry has invalid TLS certificate for some reason, you can skip its verification.
+```
+mozzle -insecure -api https://api.bosh-lite.com -username admin -password admin -org NASA -space rocket
+```
+
+Following is a full list of supported command-line flag arguments.
 ```
 Usage of mozzle:
+  -access-token string
+    	Cloud Foundry OAuth2 token; either token or username and password must be provided
   -api string
     	Address of the Cloud Foundry API (default "https://api.bosh-lite.com")
   -events-queue-size int
@@ -26,20 +52,20 @@ Usage of mozzle:
   -org string
     	Cloud Foundry organization (default "NASA")
   -password string
-    	Cloud Foundry password (default "admin")
+    	Cloud Foundry password; usage is discouraged - see token option instead
+  -refresh-token string
+    	Cloud Foundry OAuth2 refresh token; to be used with the token flag
   -riemann string
     	Address of the Riemann endpoint (default "127.0.0.1:5555")
   -space string
     	Cloud Foundry space (default "rocket")
+  -use-cf-cli-target
+    	Use CF CLI's current configured target
   -username string
-    	Cloud Foundry user (default "admin")
-```
-
-Example:
-The following command will emit metrics for all applications under the `NASA`
-organization, within the `rocket` space.
-```
-mozzle -api https://api.bosh-lite.com -org NASA -space rocket
+    	Cloud Foundry user; usage is discouraged - see token option instead
+  -v	Report mozzle version
+  -version
+    	Report mozzle version
 ```
 
 ### Demo usage
