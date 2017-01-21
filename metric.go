@@ -2,15 +2,24 @@ package mozzle
 
 // Metric is a metric regarding an application.
 type Metric struct {
-	Application   string
+	// Application is the name of the application.
+	Application string
+	// ApplicationID is the GUID of the application.
 	ApplicationID string
-	Organization  string
-	Space         string
+	// Organization is the name of the application's organization.
+	Organization string
+	// Space is the name of the application's space.
+	Space string
 
-	Time       int64
-	Service    string
-	Metric     interface{}
-	State      string
+	// Time is the time when the event occurred.
+	Time int64
+	// Service for which the metric is relevant.
+	Service string
+	// Metric value. Could be int64, float32 or float64.
+	Metric interface{}
+	// State is a text description of the service's state - e.g. 'ok', 'warn'.
+	State string
+	// Attributes are key-value pairs describing the metric.
 	Attributes map[string]string
 }
 
