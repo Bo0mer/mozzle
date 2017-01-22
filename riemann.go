@@ -4,27 +4,32 @@ import (
 	"log"
 	"time"
 
-	"github.com/bigdatadev/goryman"
+	"github.com/amir/raidman"
 )
 
 // RiemannEmitter implements Emitter that interpretes metrics as Riemann events
 // and emits them to a Riemann instance.
 type RiemannEmitter struct {
-	client    *goryman.GorymanClient
+	client    *riemann
 	eventTTL  float32
-	events    chan *goryman.Event
+	events    chan *raidman.Event
 	done      chan struct{}
 	connected bool
 }
 
 // Initialize prepares for emitting to Riemann.
-// It should be called only once, before the first call of Monitor.
+// It should be called only once, before using the emitter.
+//
+// Known networks are "tcp", "tcp4", "tcp6", "udp", "udp4" and "udp6".
 // The queueSize argument specifies how many events will be kept in-memory
 // if there is problem with emission.
-func (r *RiemannEmitter) Initialize(riemannAddr string, ttl float32, queueSize int) {
-	r.client = goryman.NewGorymanClient(riemannAddr)
+func (r *RiemannEmitter) Initialize(network, addr string, ttl float32, queueSize int) {
+	r.client = &riemann{
+		network: network,
+		addr:    addr,
+	}
 	r.eventTTL = ttl
-	r.events = make(chan *goryman.Event, queueSize)
+	r.events = make(chan *raidman.Event, queueSize)
 	r.done = make(chan struct{})
 
 	go r.emitLoop()
@@ -45,7 +50,7 @@ func (r *RiemannEmitter) Close() error {
 // Emit must be used only after calling Initialize, and not after calling
 // Shutdown.
 func (r *RiemannEmitter) Emit(m Metric) {
-	e := &goryman.Event{}
+	e := &raidman.Event{}
 	e.Ttl = r.eventTTL
 
 	e.Time = time.Now().Unix()
@@ -96,4 +101,27 @@ func (r *RiemannEmitter) emitLoop() {
 			return
 		}
 	}
+}
+
+type riemann struct {
+	network string
+	addr    string
+	client  *raidman.Client
+}
+
+func (r *riemann) Connect() error {
+	client, err := raidman.DialWithTimeout(r.network, r.addr, 5*time.Second)
+	if err != nil {
+		return err
+	}
+	r.client = client
+	return nil
+}
+
+func (r *riemann) Close() error {
+	return r.client.Close()
+}
+
+func (r *riemann) SendEvent(e *raidman.Event) error {
+	return r.client.Send(e)
 }

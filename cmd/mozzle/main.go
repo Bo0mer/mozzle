@@ -114,7 +114,7 @@ func main() {
 	}()
 
 	riemann := &mozzle.RiemannEmitter{}
-	riemann.Initialize(riemannAddr, float32(eventsTTL), queueSize)
+	riemann.Initialize("tcp", riemannAddr, float32(eventsTTL), queueSize)
 	defer func() {
 		if err := riemann.Close(); err != nil {
 			fmt.Printf("mozzle: error closing riemann emitter: %v\n", err)
