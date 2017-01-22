@@ -119,7 +119,10 @@ func (r *riemann) Connect() error {
 }
 
 func (r *riemann) Close() error {
-	return r.client.Close()
+	// TODO(ivan): Switch to return r.client.Close() once (and if)
+	// https://github.com/amir/raidman/pull/17 gets merged.
+	r.client.Close()
+	return nil
 }
 
 func (r *riemann) SendEvent(e *raidman.Event) error {
