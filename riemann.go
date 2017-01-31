@@ -61,7 +61,8 @@ func (r *RiemannEmitter) Emit(m Metric) {
 	e.Service = m.Service
 	e.Metric = m.Metric
 	e.State = m.State
-	e.Attributes = m.Attributes
+	// Since we're modifying the map, we need a copy.
+	e.Attributes = copyMap(m.Attributes)
 	if e.Attributes == nil {
 		e.Attributes = make(map[string]string)
 	}
@@ -127,4 +128,16 @@ func (r *riemann) Close() error {
 
 func (r *riemann) SendEvent(e *raidman.Event) error {
 	return r.client.Send(e)
+}
+
+// copyMap returns a copy of m. If m is nil, copyMap returns nil.
+func copyMap(m map[string]string) map[string]string {
+	if m == nil {
+		return nil
+	}
+	cpy := make(map[string]string)
+	for k, v := range m {
+		cpy[k] = v
+	}
+	return cpy
 }
