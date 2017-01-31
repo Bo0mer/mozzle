@@ -315,12 +315,12 @@ func (m *AppMonitor) appEventsSince(ctx context.Context, app application, t time
 
 // getSpace returns the Space entity described by the org, space pair.
 func getSpace(ctx context.Context, cc *ccv2.Client, org, space string) (ccv2.Space, error) {
-	orgNameQuery := ccv2.Query{
-		Filter: ccv2.FilterName,
-		Op:     ccv2.OperatorEqual,
-		Value:  org,
-	}
-	orgs, err := cc.Organizations(ctx, orgNameQuery)
+	orgs, err := cc.Organizations(ctx,
+		ccv2.Query{
+			Filter: ccv2.FilterName,
+			Op:     ccv2.OperatorEqual,
+			Value:  org,
+		})
 	if err != nil {
 		return ccv2.Space{}, err
 	}
@@ -328,12 +328,17 @@ func getSpace(ctx context.Context, cc *ccv2.Client, org, space string) (ccv2.Spa
 		return ccv2.Space{}, fmt.Errorf("%q does not describe a single organization", org)
 	}
 
-	spaceQuery := ccv2.Query{
-		Filter: ccv2.FilterOrganizationGUID,
-		Op:     ccv2.OperatorEqual,
-		Value:  orgs[0].GUID,
-	}
-	spaces, err := cc.Spaces(ctx, spaceQuery)
+	spaces, err := cc.Spaces(ctx,
+		ccv2.Query{
+			Filter: ccv2.FilterOrganizationGUID,
+			Op:     ccv2.OperatorEqual,
+			Value:  orgs[0].GUID,
+		},
+		ccv2.Query{
+			Filter: ccv2.FilterName,
+			Op:     ccv2.OperatorEqual,
+			Value:  space,
+		})
 	if err != nil {
 		return ccv2.Space{}, err
 	}
