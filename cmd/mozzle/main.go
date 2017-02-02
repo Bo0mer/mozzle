@@ -33,8 +33,11 @@ var (
 
 	riemannAddr string
 
-	eventsTTL     float64
-	queueSize     int
+	eventsTTL       float64
+	queueSize       int
+	rpcTimeout      time.Duration
+	refreshInterval time.Duration
+
 	reportVersion bool
 )
 
@@ -60,6 +63,8 @@ func init() {
 
 	flag.Float64Var(&eventsTTL, "events-ttl", 30.0, "TTL for emitted events (in seconds)")
 	flag.IntVar(&queueSize, "events-queue-size", 256, "Queue size for outgoing events")
+	flag.DurationVar(&rpcTimeout, "rpc-timeout", 15*time.Second, "Timeout for RPCs")
+	flag.DurationVar(&refreshInterval, "refresh-interval", 15*time.Second, "Time between polling the CF API")
 	flag.BoolVar(&reportVersion, "v", false, "Report mozzle version")
 	flag.BoolVar(&reportVersion, "version", false, "Report mozzle version")
 }
@@ -95,13 +100,15 @@ func main() {
 		}
 	}
 	t := mozzle.Target{
-		API:      apiAddr,
-		Username: username,
-		Password: password,
-		Token:    token,
-		Insecure: insecure,
-		Org:      org,
-		Space:    space,
+		API:             apiAddr,
+		Username:        username,
+		Password:        password,
+		Token:           token,
+		Insecure:        insecure,
+		Org:             org,
+		Space:           space,
+		RPCTimeout:      rpcTimeout,
+		RefreshInterval: refreshInterval,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

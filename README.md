@@ -56,10 +56,14 @@ Usage of mozzle:
     	Cloud Foundry organization (default "NASA")
   -password string
     	Cloud Foundry password; usage is discouraged - see token option instead
+  -refresh-interval duration
+    	Time between polling the CF API (default 15s)
   -refresh-token string
     	Cloud Foundry OAuth2 refresh token; to be used with the token flag
   -riemann string
     	Address of the Riemann endpoint (default "127.0.0.1:5555")
+  -rpc-timeout duration
+    	Timeout for RPCs (default 15s)
   -space string
     	Cloud Foundry space (default "rocket")
   -use-cf-cli-target

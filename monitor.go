@@ -21,11 +21,11 @@ import (
 )
 
 // DefaultRPCTimeout is the default timeout when making remote calls.
-const DefaultRPCTimeout = 5 * time.Second
+const DefaultRPCTimeout = 15 * time.Second
 
 // DefaultRefreshInterval is the default interval for refreshing application
 // states.
-const DefaultRefreshInterval = 5 * time.Second
+const DefaultRefreshInterval = 15 * time.Second
 
 // Firehose should implement a streaming firehose client that streams all
 // log and event messages.
@@ -51,6 +51,11 @@ type Target struct {
 	Insecure bool
 	Org      string
 	Space    string
+	// RPCTimeout configures the timeouts when making RPCs.
+	RPCTimeout time.Duration
+	// RefreshInterval configures the polling interval for application
+	// state changes.
+	RefreshInterval time.Duration
 }
 
 // AppMonitor implements a Cloud Foundry application monitor that collects
@@ -97,7 +102,10 @@ func Monitor(ctx context.Context, t Target, e Emitter) (err error) {
 		HTTPClient: httpClient,
 	}
 
-	infoCtx, cancel := context.WithTimeout(ctx, DefaultRPCTimeout)
+	if t.RPCTimeout == 0 {
+		t.RPCTimeout = DefaultRPCTimeout
+	}
+	infoCtx, cancel := context.WithTimeout(ctx, t.RPCTimeout)
 	defer cancel()
 	info, err := cf.Info(infoCtx)
 	if err != nil {
@@ -140,8 +148,8 @@ func Monitor(ctx context.Context, t Target, e Emitter) (err error) {
 
 	mon := AppMonitor{
 		ErrLog:          log.New(os.Stderr, "mozzle: ", 0),
-		RefreshInterval: DefaultRefreshInterval,
-		RPCTimeout:      DefaultRPCTimeout,
+		RefreshInterval: t.RefreshInterval,
+		RPCTimeout:      t.RPCTimeout,
 
 		CloudController: cf,
 		Firehose:        firehose,
@@ -160,6 +168,12 @@ func (m *AppMonitor) Monitor(ctx context.Context, org, space string) error {
 		m.monitored = make(map[string]struct{})
 		if m.ErrLog == nil {
 			m.ErrLog = log.New(ioutil.Discard, "", 0)
+		}
+		if m.RPCTimeout == 0 {
+			m.RPCTimeout = DefaultRPCTimeout
+		}
+		if m.RefreshInterval == 0 {
+			m.RefreshInterval = DefaultRefreshInterval
 		}
 	})
 
