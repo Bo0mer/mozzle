@@ -12,6 +12,9 @@ Cloud Foundry applications and emitting them to a 3rd party monitoring system.
 The `mozzle` command-line tool emits metrics for Cloud Foundry applications
 to a specified Riemann instance. The rest of this document describes its usage.
 
+Before reading futher, make sure you have a running Riemann instance. If you want
+just to try out `mozzle`, refer to [this guide](https://github.com/Bo0mer/mozzle/tree/master/demo/mib/) how to setup one in a minute.
+
 ## User's guide
 If you want to monitor all applications under your current Cloud Foundry target,
 as set with the CF CLI, you can do the following.

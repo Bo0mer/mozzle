@@ -25,5 +25,24 @@ vagrant up --provision
 ```
 
 After successful provisioning, you'll have Grafana available at
-http://localhost:3000 at your host machine. From then on, follow `mozzle`'s
-guide to show your application metrics in Grafana.
+[http://localhost:3000](http://localhost:3000/) at your host machine.
+The default credentials are `admin:admin`.
+
+After login, you see a list of predefined dashboards — namely Overview, Events
+and HTTP Statistics. Your application metrics will be visible there.
+
+The last step is to instruct mozzle to start pulling metrics. It operates on CF
+ space level and has option to derive the monitored target from the CF CLI.
+
+```
+$ cf target
+API endpoint:   https://api.run.pivotal.io (API version: 2.69.0)
+User:           [my-email]@gmail.com
+Org:            NASA
+Space:          rocket
+$ mozzle -use-cf-cli-target
+```
+
+The execution should block and metrics should start to appear in the Grafana dashboards.
+You should see something like the picture above.
+
