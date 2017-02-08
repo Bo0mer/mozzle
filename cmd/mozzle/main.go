@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -59,7 +60,7 @@ func init() {
 	flag.StringVar(&space, "space", "rocket", "Cloud Foundry space")
 	flag.BoolVar(&useCfCliTarget, "use-cf-cli-target", false, "Use CF CLI's current configured target")
 
-	flag.StringVar(&riemannAddr, "riemann", "127.0.0.1:5555", "Address of the Riemann endpoint")
+	flag.StringVar(&riemannAddr, "riemann", "tcp://127.0.0.1:5555", "Address of the Riemann endpoint")
 
 	flag.Float64Var(&eventsTTL, "events-ttl", 30.0, "TTL for emitted events (in seconds)")
 	flag.IntVar(&queueSize, "events-queue-size", 256, "Queue size for outgoing events")
@@ -120,8 +121,16 @@ func main() {
 		cancel()
 	}()
 
-	riemann := &mozzle.RiemannEmitter{}
-	riemann.Initialize("tcp", riemannAddr, float32(eventsTTL), queueSize)
+	network, addr, err := splitSchemeHost(riemannAddr)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "mozzle: error parsing riemann address: %v\n", err)
+		os.Exit(1)
+	}
+	if network == "" {
+		network = "tcp"
+	}
+	riemann := new(mozzle.RiemannEmitter)
+	riemann.Initialize(network, addr, float32(eventsTTL), queueSize)
 	defer func() {
 		if err := riemann.Close(); err != nil {
 			fmt.Printf("mozzle: error closing riemann emitter: %v\n", err)
@@ -209,4 +218,12 @@ func parseBearerToken(s string) (*oauth2.Token, error) {
 		TokenType:   "bearer",
 		Expiry:      time.Unix(t.Exp, 0),
 	}, nil
+}
+
+func splitSchemeHost(addr string) (scheme, host string, err error) {
+	u, err := url.Parse(addr)
+	if err != nil {
+		return "", "", err
+	}
+	return u.Scheme, u.Host, nil
 }
