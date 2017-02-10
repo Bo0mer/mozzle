@@ -231,7 +231,7 @@
   },
   "refresh": "30s",
   "schemaVersion": 13,
-  "version": 35,
+  "version": 40,
   "links": [
     {
       "icon": "external link",
@@ -298,7 +298,7 @@
                 }
               ],
               "policy": "default",
-              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"org\" =~ /^$org_name$/ AND \"space\" =~ /^$space_name$/ AND \"application\" =~ /^$app_name$/ AND $timeFilter GROUP BY \"status_code\"",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"org\" =~ /^$org_name$/ AND \"space\" =~ /^$space_name$/ AND \"application\" =~ /^$app_name$/ AND \"peer\" =~ /^server$/ AND $timeFilter GROUP BY \"status_code\"",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "table",
@@ -374,7 +374,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "alias": "mean",
+              "alias": "99",
               "dsType": "influxdb",
               "groupBy": [
                 {
@@ -394,7 +394,7 @@
               "policy": "default",
               "query": "SELECT \"value\" FROM \"http response content_length_bytes\" WHERE \"org\" =~ /^$org_name$/ AND \"space\" =~ /^$space_name$/ AND \"application\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($timeInterval)",
               "rawQuery": false,
-              "refId": "A",
+              "refId": "C",
               "resultFormat": "time_series",
               "select": [
                 [
@@ -405,8 +405,10 @@
                     "type": "field"
                   },
                   {
-                    "params": [],
-                    "type": "mean"
+                    "params": [
+                      "99"
+                    ],
+                    "type": "percentile"
                   }
                 ]
               ],
@@ -427,6 +429,12 @@
                   "key": "application",
                   "operator": "=~",
                   "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
                 }
               ]
             },
@@ -486,11 +494,17 @@
                   "key": "application",
                   "operator": "=~",
                   "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
                 }
               ]
             },
             {
-              "alias": "99",
+              "alias": "mean",
               "dsType": "influxdb",
               "groupBy": [
                 {
@@ -510,7 +524,7 @@
               "policy": "default",
               "query": "SELECT \"value\" FROM \"http response content_length_bytes\" WHERE \"org\" =~ /^$org_name$/ AND \"space\" =~ /^$space_name$/ AND \"application\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($timeInterval)",
               "rawQuery": false,
-              "refId": "C",
+              "refId": "A",
               "resultFormat": "time_series",
               "select": [
                 [
@@ -521,10 +535,8 @@
                     "type": "field"
                   },
                   {
-                    "params": [
-                      "99"
-                    ],
-                    "type": "percentile"
+                    "params": [],
+                    "type": "mean"
                   }
                 ]
               ],
@@ -545,6 +557,12 @@
                   "key": "application",
                   "operator": "=~",
                   "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
                 }
               ]
             }
@@ -680,6 +698,12 @@
                   "key": "application",
                   "operator": "=~",
                   "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
                 }
               ]
             }
@@ -810,6 +834,12 @@
                   "key": "application",
                   "operator": "=~",
                   "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
                 }
               ]
             }
@@ -868,188 +898,9 @@
           "renderer": "flot",
           "seriesOverrides": [],
           "span": 12,
-          "stack": true,
+          "stack": false,
           "steppedLine": false,
           "targets": [
-            {
-              "alias": "25",
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$summarize"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "measurement": "http response time_ms",
-              "policy": "default",
-              "query": "SELECT mean(\"value\") FROM \"http response time_ms\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"method\" fill(null)",
-              "rawQuery": false,
-              "refId": "D",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [
-                      "25"
-                    ],
-                    "type": "percentile"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "org",
-                  "operator": "=~",
-                  "value": "/^$org_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "space",
-                  "operator": "=~",
-                  "value": "/^$space_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "application",
-                  "operator": "=~",
-                  "value": "/^$app_name$/"
-                }
-              ],
-              "target": ""
-            },
-            {
-              "alias": "mean",
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$summarize"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "measurement": "http response time_ms",
-              "policy": "default",
-              "query": "SELECT mean(\"value\") FROM \"http response time_ms\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"method\" fill(null)",
-              "rawQuery": false,
-              "refId": "A",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "org",
-                  "operator": "=~",
-                  "value": "/^$org_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "space",
-                  "operator": "=~",
-                  "value": "/^$space_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "application",
-                  "operator": "=~",
-                  "value": "/^$app_name$/"
-                }
-              ],
-              "target": ""
-            },
-            {
-              "alias": "95",
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$summarize"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "hide": false,
-              "measurement": "http response time_ms",
-              "policy": "default",
-              "query": "SELECT mean(\"value\") FROM \"http response time_ms\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"method\" fill(null)",
-              "rawQuery": false,
-              "refId": "B",
-              "resultFormat": "time_series",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [
-                      95
-                    ],
-                    "type": "percentile"
-                  }
-                ]
-              ],
-              "tags": [
-                {
-                  "key": "org",
-                  "operator": "=~",
-                  "value": "/^$org_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "space",
-                  "operator": "=~",
-                  "value": "/^$space_name$/"
-                },
-                {
-                  "condition": "AND",
-                  "key": "application",
-                  "operator": "=~",
-                  "value": "/^$app_name$/"
-                }
-              ],
-              "target": ""
-            },
             {
               "alias": "99",
               "dsType": "influxdb",
@@ -1059,12 +910,6 @@
                     "$summarize"
                   ],
                   "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
                 }
               ],
               "hide": false,
@@ -1107,6 +952,193 @@
                   "key": "application",
                   "operator": "=~",
                   "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
+                }
+              ],
+              "target": ""
+            },
+            {
+              "alias": "95",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$summarize"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT mean(\"value\") FROM \"http response time_ms\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"method\" fill(null)",
+              "rawQuery": false,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      95
+                    ],
+                    "type": "percentile"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "org",
+                  "operator": "=~",
+                  "value": "/^$org_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "space",
+                  "operator": "=~",
+                  "value": "/^$space_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "application",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
+                }
+              ],
+              "target": ""
+            },
+            {
+              "alias": "mean",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$summarize"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT mean(\"value\") FROM \"http response time_ms\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"method\" fill(null)",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "org",
+                  "operator": "=~",
+                  "value": "/^$org_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "space",
+                  "operator": "=~",
+                  "value": "/^$space_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "application",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
+                }
+              ],
+              "target": ""
+            },
+            {
+              "alias": "25",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$summarize"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "hide": false,
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT mean(\"value\") FROM \"http response time_ms\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"method\" fill(null)",
+              "rawQuery": false,
+              "refId": "D",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [
+                      "25"
+                    ],
+                    "type": "percentile"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "org",
+                  "operator": "=~",
+                  "value": "/^$org_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "space",
+                  "operator": "=~",
+                  "value": "/^$space_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "application",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
                 }
               ],
               "target": ""
@@ -1115,7 +1147,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "HTTP Response times",
+          "title": "HTTP Response time (router)",
           "tooltip": {
             "msResolution": true,
             "shared": true,
@@ -1136,6 +1168,203 @@
               "logBase": 1,
               "max": null,
               "min": "0",
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "showTitle": false,
+      "titleSize": "h6",
+      "height": 250,
+      "repeat": null,
+      "repeatRowId": null,
+      "repeatIteration": null,
+      "collapse": false
+    },
+    {
+      "title": "Dashboard Row",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "InfluxDB",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {},
+          "id": 8,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": false,
+            "max": true,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "application mean",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$summarize"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT mean(\"value\") FROM \"http response time_ms\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"method\" fill(null)",
+              "rawQuery": false,
+              "refId": "A",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "org",
+                  "operator": "=~",
+                  "value": "/^$org_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "space",
+                  "operator": "=~",
+                  "value": "/^$space_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "application",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "client"
+                }
+              ],
+              "target": ""
+            },
+            {
+              "alias": "router mean",
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$summarize"
+                  ],
+                  "type": "time"
+                }
+              ],
+              "measurement": "http response time_ms",
+              "policy": "default",
+              "query": "SELECT mean(\"value\") FROM \"http response time_ms\" WHERE \"state\" = 'ok' AND \"host\" =~ /^$app_name$/ AND $timeFilter GROUP BY time($interval), \"method\" fill(null)",
+              "rawQuery": false,
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "params": [
+                      "value"
+                    ],
+                    "type": "field"
+                  },
+                  {
+                    "params": [],
+                    "type": "mean"
+                  }
+                ]
+              ],
+              "tags": [
+                {
+                  "key": "org",
+                  "operator": "=~",
+                  "value": "/^$org_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "space",
+                  "operator": "=~",
+                  "value": "/^$space_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "application",
+                  "operator": "=~",
+                  "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
+                }
+              ],
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "HTTP Response time (app vs router)",
+          "tooltip": {
+            "msResolution": true,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "ms",
+              "label": "",
+              "logBase": 10,
+              "max": null,
+              "min": 0,
               "show": true
             },
             {
@@ -1251,6 +1480,12 @@
                   "key": "application",
                   "operator": "=~",
                   "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
                 }
               ],
               "target": ""
@@ -1259,7 +1494,7 @@
           "thresholds": [],
           "timeFrom": null,
           "timeShift": null,
-          "title": "HTTP Response time (detailed)",
+          "title": "HTTP Response time (router)",
           "tooltip": {
             "msResolution": true,
             "shared": true,

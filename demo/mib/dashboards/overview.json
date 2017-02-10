@@ -239,7 +239,7 @@
   },
   "refresh": "30s",
   "schemaVersion": 13,
-  "version": 22,
+  "version": 25,
   "links": [],
   "gnetId": null,
   "rows": [
@@ -1169,7 +1169,7 @@
               ],
               "measurement": "http response time_ms",
               "policy": "default",
-              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND $timeFilter",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"org\" =~ /^$org_name$/ AND \"space\" =~ /^$space_name$/ AND \"application\" =~ /^$app_name$/ AND \"state\" = 'ok' AND \"peer\" = 'server' AND $timeFilter",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
@@ -1286,7 +1286,7 @@
               "hide": false,
               "measurement": "http response time_ms",
               "policy": "default",
-              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND \"status_code\" =~ /^2[0-9]+$/ AND $timeFilter",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"org\" =~ /^$org_name$/ AND \"space\" =~ /^$space_name$/ AND \"host\" =~ /^$app_name$/ AND \"peer\" = 'server' AND \"state\" = 'ok' AND \"status_code\" =~ /^2[0-9]+$/ AND $timeFilter",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
@@ -1408,7 +1408,7 @@
               "hide": false,
               "measurement": "http response time_ms",
               "policy": "default",
-              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND \"status_code\" =~ /^5[0-9]+$/ AND $timeFilter",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"org\" =~ /^$org_name$/ AND \"space\" =~ /^$space_name$/ AND \"host\" =~ /^$app_name$/ AND \"peer\" = 'server' AND \"state\" = 'ok' AND \"status_code\" =~ /^5[0-9]+$/ AND $timeFilter",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
@@ -1530,7 +1530,7 @@
               "hide": false,
               "measurement": "http response time_ms",
               "policy": "default",
-              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"host\" =~ /^$app_name$/ AND \"state\" = 'ok' AND \"status_code\" =~ /^4[0-9]+$/ AND $timeFilter",
+              "query": "SELECT count(\"value\") FROM \"http response time_ms\" WHERE \"org\" =~ /^$org_name$/ AND \"space\" =~ /^$space_name$/ AND  \"host\" =~ /^$app_name$/ AND \"peer\" = 'server' AND \"state\" = 'ok' AND \"status_code\" =~ /^4[0-9]+$/ AND $timeFilter",
               "rawQuery": true,
               "refId": "A",
               "resultFormat": "time_series",
@@ -1869,6 +1869,12 @@
                   "key": "application",
                   "operator": "=~",
                   "value": "/^$app_name$/"
+                },
+                {
+                  "condition": "AND",
+                  "key": "peer",
+                  "operator": "=",
+                  "value": "server"
                 }
               ],
               "target": ""

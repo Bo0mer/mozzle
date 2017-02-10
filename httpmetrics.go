@@ -20,20 +20,25 @@ func (r httpMetrics) EmitTo(e Emitter) {
 
 	switch r.GetPeerType() {
 	case cfevent.PeerType_Client:
-		durationMillis := (r.GetStopTimestamp() - r.GetStartTimestamp()) / 1000000
-		e.Emit(forApp(r.App, Metric{
-			Service:    "http response time_ms",
-			Metric:     int(durationMillis),
-			State:      "ok",
-			Attributes: attributes,
-		}))
+		attributes["peer"] = "client"
 	case cfevent.PeerType_Server:
-		e.Emit(forApp(r.App, Metric{
-			Service:    "http response content_length_bytes",
-			Metric:     int(r.GetContentLength()),
-			State:      "ok",
-			Attributes: attributes,
-		}))
+		attributes["peer"] = "server"
+	default:
+		attributes["peer"] = "unknown"
 	}
+
+	durationMillis := (r.GetStopTimestamp() - r.GetStartTimestamp()) / 1000000
+	e.Emit(forApp(r.App, Metric{
+		Service:    "http response time_ms",
+		Metric:     int(durationMillis),
+		State:      "ok",
+		Attributes: attributes,
+	}))
+	e.Emit(forApp(r.App, Metric{
+		Service:    "http response content_length_bytes",
+		Metric:     int(r.GetContentLength()),
+		State:      "ok",
+		Attributes: attributes,
+	}))
 
 }

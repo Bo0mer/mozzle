@@ -26,7 +26,11 @@
 // org, space, name, id, and the insntace index (when appropriate).
 //
 // Additionally, the HTTP events have attributes specifying the method,
-// request_id, content length and the returned status code.
+// request_id, content length the returned status code and the peer type.
+// There are two peer types - client and server. Client means that measurements
+// are recorded via the Cloud Foundry router's HTTP client that requested the
+// application container and server means that the measurements are recorded
+// for responding to the end user via the router server.
 //
 // The application event metrics have attributes that describe the event's
 // actor and actee, as well as their ids.
