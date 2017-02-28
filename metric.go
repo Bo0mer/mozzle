@@ -39,6 +39,9 @@ func forApp(app application, m Metric) Metric {
 }
 
 func ratio(part, whole uint64) float64 {
+	if whole == 0 {
+		return 0.0
+	}
 	return float64(part) / float64(whole)
 }
 
