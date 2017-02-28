@@ -370,7 +370,7 @@
           "renderer": "flot",
           "seriesOverrides": [],
           "span": 4,
-          "stack": true,
+          "stack": false,
           "steppedLine": false,
           "targets": [
             {
@@ -1221,7 +1221,7 @@
           "renderer": "flot",
           "seriesOverrides": [],
           "span": 12,
-          "stack": true,
+          "stack": false,
           "steppedLine": false,
           "targets": [
             {
