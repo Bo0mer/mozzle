@@ -138,7 +138,7 @@ func Monitor(ctx context.Context, t Target, e Emitter) (err error) {
 	firehose := consumer.New(info.DopplerEndpoint, tlsConfig, nil)
 	defer func() {
 		if cerr := firehose.Close(); cerr != nil && err == nil {
-			cerr = err
+			err = cerr
 		}
 	}()
 
