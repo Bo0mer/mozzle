@@ -163,11 +163,7 @@ type cliConfig struct {
 // The default location is CF_HOME/.cf/config.json.
 // If the CF_HOME env variable is not set, it defaults to HOME env variable.
 func cfcliConfig() (*cliConfig, error) {
-	var path string
-	if path = os.Getenv("CF_HOME"); path == "" {
-		path = os.Getenv("HOME")
-	}
-	path = filepath.Join(path, ".cf/config.json")
+	path := filepath.Join(homeDir(), ".cf", "config.json")
 	fd, err := os.Open(path)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error open %q", path)
